@@ -1,5 +1,39 @@
 # Workflow Issues
 
+### My custom workflow is not found
+
+**Problem**: A workflow you placed in your user or system configuration
+directory doesn't appear in `frg workflow list`, or `frg workflow run`
+reports `Unknown workflow`.
+
+**Solution**: Work through this checklist in order:
+
+1. Run `frg workflow list` and check whether the workflow appears with a
+   source of `user` or `system`.
+2. If it does not appear, confirm `.forge/config/project.toml` contains
+   `[config.external_sources]` with `enabled = true`.
+3. Confirm `workflows` is not set to `false` under
+   `[config.external_sources]`.
+4. Confirm `FORGE_DISABLE_EXTERNAL_CONFIGS` is not set in your shell
+   (`echo $FORGE_DISABLE_EXTERNAL_CONFIGS`).
+5. Confirm the file is in `<user config>/config/workflows/` — note the
+   nested `config` directory, a common mistake
+   (e.g. `~/.config/forge/config/workflows/`, not
+   `~/.config/forge/workflows/`).
+6. Confirm the `name` in the file's `[workflow]` table matches the name you
+   are invoking; `frg` matches on that name, not the filename.
+7. Re-run with `RUST_LOG=debug` and look for the
+   `Resolved external workflow source gate` and
+   `Workflow tier directory absent` log lines, which report the gate value
+   and which tier directories were actually scanned.
+
+See [Hierarchical Configuration](../configuration/hierarchical.md#workflow-configuration)
+for the full discovery rules.
+
+**Related**: [Hierarchical Configuration](../configuration/hierarchical.md), [Workflow Introduction](../workflows/introduction.md)
+
+---
+
 ### Missing Workflow Context
 
 **Problem**: Workflow requires context (issue ID or PR ID) but it's not set.

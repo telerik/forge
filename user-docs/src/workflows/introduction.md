@@ -449,11 +449,26 @@ Export for customization:
 frg config export --workflows
 ```
 
-Workflows are automatically loaded from two sources:
-1. **Built-in workflows** (bundled with frg binary) - marked as "(built-in)" in `frg workflow list`
-2. **User workflows** in `.forge/config/workflows/` - override built-ins with the same name
+Workflows are automatically loaded from up to four sources, in ascending
+priority: built-in, system, user, repository. The repository tier
+(`.forge/config/workflows/`) is always read; the system and user tiers are
+read only when `[config.external_sources]` enables the `workflows` domain in
+`.forge/config/project.toml`. See
+[Hierarchical Configuration](../configuration/hierarchical.md#workflow-configuration)
+for the full discovery rules, per-platform directories, and precedence
+details.
 
-This means you can customize specific workflows by exporting and editing them, while keeping others at their default built-in versions.
+1. **Built-in workflows** (bundled with frg binary) - marked as "(built-in)" in `frg workflow list`
+2. **System/user workflows** - shared team or personal workflows from the
+   system or user configuration directories, opted into via
+   `[config.external_sources]`
+3. **Repository workflows** in `.forge/config/workflows/` - override
+   built-in, system and user workflows of the same name
+
+This means you can customize specific workflows by exporting and editing them, while keeping others at their default built-in versions. Run
+`frg workflow list` to see which tier each workflow currently in effect came
+from (`built-in`, `repository`, `user`, `system`) — useful for confirming
+which definition wins when the same name exists in more than one tier.
 
 ## Production Example
 

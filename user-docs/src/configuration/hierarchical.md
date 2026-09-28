@@ -283,28 +283,58 @@ required` error rather than falling back to a default toolchain. Setting
 
 ## Workflow Configuration
 
-Workflows support the same hierarchical loading as other configuration files:
+Workflows are discovered from three tiers, in ascending priority: system,
+user, repository. The exact directory per platform is:
+
+| Tier | Unix | Windows |
+|---|---|---|
+| System | `/etc/forge/config/workflows/` | `%PROGRAMDATA%\forge\config\workflows\` |
+| User | `$XDG_CONFIG_HOME/forge/config/workflows/` or `~/.config/forge/config/workflows/` | `%APPDATA%\forge\config\workflows\` |
+| Repository | `.forge/config/workflows/` | `.forge\config\workflows\` |
+
+The system and user tiers are read only when `[config.external_sources]` in
+`.forge/config/project.toml` sets `enabled = true`. Without a
+`project.toml`, or with `enabled = false`, only the repository tier is used:
 
 ```toml
 # .forge/config/project.toml
 [config.external_sources]
 enabled = true
-workflows = true  # Enable workflow loading from user/system
+workflows = true   # optional; defaults to true when `enabled = true`
 ```
 
+The per-domain `workflows` key follows the same rules as the other
+domains: omitted or `true` means workflows follow the master `enabled`
+switch; `false` disables the external workflow tiers while leaving
+`agents`, `toolchain`, `commands` and `telemetry` unaffected.
+`FORGE_DISABLE_EXTERNAL_CONFIGS=1` (or `=true`) disables every external
+tier regardless of `project.toml`, and always takes final precedence.
+
 Workflow merge strategy:
-- Workflows with the same filename from higher priority sources **completely override** lower priority
-- No partial merging of workflow steps
-- This ensures workflow consistency and prevents unexpected behavior
+- Workflows are matched across tiers by the `name` declared in the file's
+  `[workflow]` table, **not** by filename. A repository workflow declaring
+  `name = "xdev-1"` overrides a user workflow declaring the same name even
+  if the files use different filenames.
+- Workflows with the same name from higher priority tiers **completely
+  override** lower priority tiers; there is no partial merging of workflow
+  steps. This ensures workflow consistency and prevents unexpected behavior.
+- A malformed workflow file in the system or user tier produces a warning
+  naming the tier and path, and is skipped; other workflows still load and
+  the command still succeeds.
 
 Example:
 ```
-System: /etc/forge/config/workflows/review.toml
-User:   ~/.config/forge/config/workflows/review.toml
-Repo:   .forge/config/workflows/review.toml
+System: /etc/forge/config/workflows/review.toml       -> [workflow] name = "review"
+User:   ~/.config/forge/config/workflows/team-review.toml -> [workflow] name = "review"
+Repo:   .forge/config/workflows/review.toml            -> [workflow] name = "review"
 
-Result: Only repo review.toml is used (completely overrides user and system)
+Result: Only the repository's "review" workflow is used (completely
+overrides the user and system definitions of the same name, regardless of
+their filenames).
 ```
+
+Run `frg workflow list` to see which tier each workflow was loaded from
+(`built-in`, `repository`, `user`, `system`).
 
 ## Troubleshooting
 
