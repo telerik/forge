@@ -1,6 +1,6 @@
 # Authentication Commands
 
-`frg auth login`, `frg auth logout`, `frg auth whoami`, and `frg auth refresh` manage your browser-based sign-in to the Progress/Telerik identity service and the local session it creates. Signing in also downloads your Telerik license key, so most users only need to run `frg auth login` once per machine.
+`frg auth login`, `frg auth logout`, `frg auth whoami`, `frg auth refresh`, and `frg auth trial` manage your browser-based sign-in to the Progress/Telerik identity service and the local session it creates. Signing in also downloads your Telerik license key, so most users only need to run `frg auth login` once per machine.
 
 ## Output and cancellation
 
@@ -37,6 +37,9 @@ If you are already signed in, `frg auth login` reports the current user and exit
 | `--no-browser` | Print the sign-in URL instead of opening a browser automatically |
 | `--timeout <SECONDS>` | Seconds to wait for the browser callback (default: 300) |
 | `--force` | Re-authenticate even when a valid session already exists |
+| `--activate-trial` | Activate a trial without asking when the account has no license |
+| `--no-trial` | Never offer or activate a trial license |
+| `--no-prompt` | Skip interactive trial confirmation; activate only with `--activate-trial` |
 | `--json` | Emit machine-readable JSON output |
 | `-o, --output <PATH>` | Where to write the license key (default: the Telerik user directory) |
 | `--port <PORT>` | Fixed local port for the browser callback (default: a free port in 30000-50000) |
@@ -56,6 +59,40 @@ ssh -L 30123:127.0.0.1:30123 your-remote-host
 ```
 
 Without the port forward, the browser's redirect back to the remote machine's loopback listener cannot reach it, and the login attempt will time out.
+
+### License entitlement check
+
+After sign-in succeeds, Forge verifies whether your account already has a Progress Forge license before downloading the local key. If a paid license or an existing trial is already present, the output is unchanged and the license download continues exactly as usual.
+
+When the account has no entitlement, Forge warns before offering a free trial:
+
+```text
+Signed in as Jane Doe
+
+⚠  Your account does not have a Progress Forge license.
+   Forge commands that require a license will not run until you have one.
+
+   A free trial is available for this account.
+
+Activate a Progress Forge trial now? [Y/n]
+```
+
+- Answer **yes** (or press Enter) to activate the trial, then download the license key immediately.
+- Answer **no** to keep the successful sign-in, skip the license download, and show guidance to run `frg auth trial` later. Declining is **not** an error and still exits `0`.
+- In a non-interactive session (`--json`, `--no-prompt`, CI, headless, or piped terminal), Forge never blocks on stdin. It reports that no Progress Forge license was found and that `frg auth trial` or `frg auth login --activate-trial` can activate one later.
+- If entitlement verification itself fails, sign-in still succeeds. Forge warns that it could not verify your Progress Forge license entitlement and suggests `frg auth refresh` or `frg auth trial`.
+
+Use `--activate-trial` to answer yes automatically, or `--no-trial` to suppress the offer and activation entirely.
+
+Activation responses may omit license metadata. Forge accepts missing license IDs and both
+camelCase and PascalCase metadata fields. If a successful HTTP response cannot identify the
+activation outcome, Forge checks entitlement again before downloading the key, without repeating
+the activation request. If entitlement still cannot be confirmed, sign-in remains successful;
+Forge reports that activation may have succeeded and suggests `frg auth refresh`.
+
+In login and refresh JSON output, `trial.activated` is true when the command creates or finds
+a trial, including an existing entitlement returned during activation. `trial.has_license` is
+`trial.entitled || trial.activated`. Unavailable license IDs and expiry dates are `null`.
 
 ### Exit codes
 
@@ -90,10 +127,25 @@ the older browser sign-in is still pending.
 |---|---|
 | `--no-fallback` | Fail instead of opening a browser when the refresh token has expired |
 | `--no-browser` | Print the sign-in URL instead of opening a browser automatically (only relevant when falling back) |
+| `--activate-trial` | Activate a trial without asking when the account has no license |
+| `--no-trial` | Never offer or activate a trial license |
+| `--no-prompt` | Skip interactive trial confirmation; activate only with `--activate-trial` |
 | `--timeout <SECONDS>` | Seconds to wait for the browser callback if falling back (default: 300) |
 | `--json` | Emit machine-readable JSON output |
 | `-o, --output <PATH>` | Where to write the license key (default: the Telerik user directory) |
 | `--port <PORT>` | Fixed local port for the browser callback if falling back (default: a free port in 30000-50000) |
+
+### License entitlement check
+
+After a successful refresh, Forge performs the same entitlement verification and trial offer as `frg auth login` before downloading the refreshed license key.
+
+- Already entitled accounts see no extra output and keep the existing refresh behaviour.
+- Accounts without a license are warned that Forge commands requiring a license will not run until one exists, then offered a free trial.
+- Accepting activates the trial first and downloads the license key second, so the saved key contains the new evidence immediately.
+- Declining leaves the refresh successful, skips the license download, prints guidance to run `frg auth trial`, and still exits `0`.
+- In non-interactive sessions, Forge never waits for input and instead prints the same `frg auth trial` guidance.
+
+Use `--activate-trial` for scripted activation or `--no-trial` to suppress the offer.
 
 `--no-fallback` is intended for CI and scripted use: it lets you distinguish "the session needed a browser to renew" (exit `11`, no browser opened) from an actual renewal, without ever risking an unattended process opening a browser window.
 
@@ -109,6 +161,40 @@ the renewed session is retained and the command reports the license error.
 # In a script: renew if possible, fail fast (no browser) otherwise
 frg auth refresh --no-fallback || { echo "Refresh failed; follow the reported recovery guidance." >&2; exit 1; }
 ```
+
+## trial
+
+Activate a Progress Forge trial license for the signed-in account.
+
+```bash
+frg auth trial
+```
+
+`frg auth trial` first checks whether your account already has a Progress Forge license. If so, it prints `Your account already has a Progress Forge license. Nothing to do.` and exits `0` without changing anything.
+
+If the account has no entitlement, Forge offers the free trial and, when accepted, activates it and downloads the resulting license key immediately. Invoking `frg auth trial` explicitly means a non-interactive `--json`, `--no-prompt`, or otherwise non-promptable run is still treated as consent to activate unless you decline before execution with your own wrapper logic.
+
+Four outcomes are possible:
+
+- **Activated**: a new trial was created, the license key was downloaded, and the output names the expiry date when the service supplied one.
+- **Already entitled**: the account already has a paid or trial license, so nothing changes.
+- **Declined**: the prompt was answered no, no activation request was sent, and Forge prints `No trial was activated. Workflow commands will report a missing license. Run `frg auth trial` at any time to activate one.`
+- **Ineligible**: the entitlement service rejected the activation (for example because a trial was already used), and the command fails with exit code `14` plus guidance to contact your Progress representative.
+
+You must already be signed in. If no valid session exists, the command fails with `You must be signed in to activate a trial. Run `frg auth login` first.`
+
+The same activation-response recovery described for login applies here. If the service returns
+success but entitlement cannot be confirmed, the command exits `14` without downloading the key
+and recommends `frg auth refresh`; it does not claim the activation was rejected.
+
+### Flags
+
+| Flag | Description |
+|---|---|
+| `-y, --yes` | Activate without asking for confirmation |
+| `--no-prompt` | Activate without interactive confirmation when the account has no license |
+| `--json` | Emit machine-readable JSON output |
+| `-o, --output <PATH>` | Where to write the license key (default: the Telerik user directory) |
 
 ## logout
 
@@ -236,6 +322,7 @@ executables using the previous format do not participate in the shared-session c
 | `11` | Not signed in, refresh rejected, issuer/build mismatch, lock busy, or session replaced by another operation |
 | `12` | The identity provider did not return a refresh token to renew the session with |
 | `13` | `frg auth refresh`: the license key download or write failed after a successful renewal (refresh fails the command here because renewing the license is the point of the command). `frg auth login` never returns `13` — a license-download failure after a successful sign-in is treated as non-fatal and exits `0`; run `frg auth refresh` afterwards to retry the license download. |
+| `14` | Trial activation failed, the account is not eligible for a trial, or `frg auth trial` was run while signed out. |
 | `100` | Cancelled (Ctrl+C) |
 
 ## Telemetry
