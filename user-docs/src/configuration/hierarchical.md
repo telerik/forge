@@ -248,6 +248,39 @@ Individual repositories can:
 - Override specific workflow steps in their repository configuration
 - Add repository-specific workflows alongside team workflows
 
+## Toolchain Configuration
+
+Toolchain configuration (issue tracker, code platform, security scanner and custom tool
+definitions) supports the same hierarchical loading as other configuration files:
+
+```toml
+# .forge/config/project.toml
+[config.external_sources]
+enabled = true
+toolchain = true  # Enable toolchain.toml loading from user/system
+```
+
+### Toolchain resolution at runtime
+
+Since forge resolved issue [#1368](https://github.com/Progress-Copilot/nia/issues/1368), workflow
+execution, prompt composition and routing classification use exactly the same hierarchical
+discovery as `frg config` reporting. A `toolchain.toml` placed in the user tier
+(`$XDG_CONFIG_HOME/forge/toolchain.toml` or `%APPDATA%\forge\toolchain.toml`) or the system tier
+(`/etc/forge/toolchain.toml` or `%PROGRAMDATA%\forge\toolchain.toml`) is used at runtime when
+`.forge/config/project.toml` contains:
+
+```toml
+[config.external_sources]
+enabled = true
+toolchain = true
+```
+
+The `enabled` flag is required; `toolchain` defaults to enabled and can be set to `false` to opt out. Precedence, lowest to highest, is system → user → connected application → repository. `frg status -v` lists every file that contributed.
+
+If no `toolchain.toml` is found at any enabled tier, forge fails with a `toolchain.toml is
+required` error rather than falling back to a default toolchain. Setting
+`FORGE_DISABLE_EXTERNAL_CONFIGS=true` disables system and user tiers; connected application configuration remains eligible, with repository configuration still taking highest priority.
+
 ## Workflow Configuration
 
 Workflows support the same hierarchical loading as other configuration files:
@@ -274,6 +307,15 @@ Result: Only repo review.toml is used (completely overrides user and system)
 ```
 
 ## Troubleshooting
+
+### "toolchain.toml is required" even though I have a user-level toolchain.toml
+
+forge only reads the user and system tiers when the repository opts in. Check that
+`.forge/config/project.toml` contains `[config.external_sources]` with both `enabled = true`
+and `toolchain = true`, that `FORGE_DISABLE_EXTERNAL_CONFIGS` is not set, and that the file is
+at `$XDG_CONFIG_HOME/forge/toolchain.toml` (not under a `config/` subdirectory).
+Run `frg status -v` to see every file that contributed, and `RUST_LOG=debug frg status` to see
+the tiers that were searched.
 
 ### External sources not loading
 
