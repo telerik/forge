@@ -405,6 +405,78 @@ Run the workflow without a custom agent and inspect the trace to confirm that th
 
 Use `--custom-agent` for a persona defined by the external agent platform. Use `--role` for a role built into Progress Forge.
 
+## Resolve Effort-Level Problems
+
+### The Configured Effort Level Is Ignored
+
+#### Symptoms
+
+The workflow runs, but Progress Forge prints a warning that the configured effort level is ignored, and the agent invocation proceeds without an effort flag.
+
+#### Exact status message
+
+```
+Effort level '<value>' is configured for agent '<agent>', but the <Agent Name> CLI has no
+command-line option for reasoning effort. The setting is ignored for this run.
+Configure the effort level directly in that agent's own settings if you need it.
+```
+
+#### Possible Causes
+
+The selected agent's CLI has no command-line option for reasoning effort. Currently this applies only to Gemini CLI.
+
+#### Resolution
+
+Switch to an agent that supports the flag (`github_copilot`, `claude_code`, or `opencode`), remove the `effort` setting, or set `thinkingConfig` directly in Gemini CLI's own `settings.json`.
+
+#### Verification
+
+Run the workflow again and confirm the warning no longer appears, or confirm the agent's own settings file now controls its reasoning depth.
+
+#### Additional Notes
+
+See [Effort Levels](./effort-levels.md) for the full list of agents that support an effort flag.
+
+### The Agent Reports an Invalid Effort Value
+
+#### Symptoms
+
+The agent CLI exits with an error naming the configured effort value as invalid, rather than Progress Forge reporting the problem.
+
+#### Possible Causes
+
+Progress Forge passes the configured effort value through to the agent CLI unchecked. The selected model or provider rejected the value.
+
+#### Resolution
+
+Use a value the agent documents for that model. Run `copilot --help`, `claude --help`, or `opencode run --help` to list the values the installed CLI accepts.
+
+#### Verification
+
+Update the `effort` value to one of the values reported by the agent's `--help` output, and re-run the workflow.
+
+#### Additional Notes
+
+`low`, `medium`, `high`, and `max` are the portable subset accepted by all three supported agents.
+
+### The Agent Reports an Unknown Option Such as `--effort`
+
+#### Symptoms
+
+The agent CLI exits with an unknown-option error naming the effort flag itself (for example `--effort` or `--reasoning-effort`).
+
+#### Possible Causes
+
+The installed agent CLI predates the effort flag. Progress Forge does not check agent CLI versions before passing the flag.
+
+#### Resolution
+
+Update the agent CLI (for example `claude update`), or remove the `effort` setting until the CLI is updated.
+
+#### Verification
+
+Run the agent CLI's version command (for example `claude --version`) and confirm it meets or exceeds the version documented in [Effort Levels](./effort-levels.md).
+
 ## Resolve Prompt Problems
 
 ### A Prompt Override File Is Missing

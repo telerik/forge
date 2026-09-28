@@ -29,6 +29,7 @@
   - [Agent Setup](./agents/setup.md)
   - [Model Selection](./agents/model-selection.md)
   - [Prompt Formats](./agents/prompt-formats.md)
+  - [Effort Levels](./agents/effort-levels.md)
   - [Custom Agent Configurations](./agents/custom-agent-configurations.md)
   - [Troubleshooting](./agents/troubleshooting.md)
 

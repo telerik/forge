@@ -323,3 +323,9 @@ The check is not a workflow operation, so only the agent-level `model` is used.
 
 Normal workflow commands are unaffected: they do not run this check and continue
 to use the full model resolution order described above.
+
+## Related: Effort Levels
+
+Models with variable reasoning depth also accept an effort level, configured
+with the same agent, target, and operation precedence used for model
+selection. See [Effort Levels](./effort-levels.md).
