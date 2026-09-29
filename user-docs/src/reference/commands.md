@@ -903,6 +903,7 @@ Initializing .frg directory structure...
     .forge/cache/
     .forge/.context.lock
     .forge/.workflow.lock
+    .forge/.setup.lock
     .forge/work/**/traces/.heartbeat
     .forge/config/opensearch.toml
     .forge/config/telemetry.toml

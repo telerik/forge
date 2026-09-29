@@ -97,7 +97,7 @@ Wrapper parsing failed, falling back to direct invocation
 ```
 
 This means frg couldn't parse the wrapper format. To resolve:
-1. Install via WinGet for native .exe: `winget install GitHub.CopilotCLI`
+1. Install via WinGet for native .exe: `winget install GitHub.Copilot`
 2. Or set explicit path in `.forge/config/agents.toml`
 
 **Technical Details**: npm creates `.cmd` wrapper scripts on Windows. These wrappers have historically caused issues with long command lines and special characters. Progress Forge now parses these wrappers at startup to find the underlying Node.js script, then invokes `node` directly, eliminating all wrapper-related limitations.
@@ -133,7 +133,7 @@ Configuration error: 'command = "gh"' is not supported.
 
 ```powershell
 # Install native executable
-winget install GitHub.CopilotCLI
+winget install GitHub.Copilot
 
 # Verify
 frg status

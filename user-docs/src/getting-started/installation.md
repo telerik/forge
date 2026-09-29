@@ -561,7 +561,7 @@ On Windows, we recommend installing GitHub Copilot CLI using one of these method
 #### Install with WinGet (Recommended)
 
 ```powershell
-winget install GitHub.CopilotCLI
+winget install GitHub.Copilot
 ```
 
 This installs a native Windows executable that works reliably with Progress Forge.
@@ -581,7 +581,7 @@ prompts that include multi-file context, detailed instructions, and XML formatti
 - Truncated or failed responses from Copilot
 
 **If you have gh extension installed:**
-1. Install via WinGet instead: `winget install GitHub.CopilotCLI`
+1. Install via WinGet instead: `winget install GitHub.Copilot`
 2. Or use npm with automatic wrapper discovery (see below)
 3. Remove any `command = "gh"` from your `.forge/config/agents.toml`
 

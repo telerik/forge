@@ -294,7 +294,7 @@ Apply these practices when managing model configuration:
 - [Agent Setup Guide](./setup.md) explains agent installation and authentication.
 - [Toolchain Configuration](./toolchain-config.md) explains the tools and platforms available to agents.
 - [Workflow Commands](../cli-api/workflow-commands.md) describes workflow targets and operations.
-- [GitHub Copilot CLI Documentation](https://github.com/github/gh-copilot) provides external agent documentation.
+- [GitHub Copilot CLI Documentation](https://docs.github.com/copilot/concepts/agents/copilot-cli/about-copilot-cli) provides external agent documentation.
 
 ## Model Used for Health Checks
 

@@ -23,6 +23,7 @@ Progress Forge also creates these files during operation:
 |--------------|---------|
 | `.forge/.context.lock` | Concurrent context access lock |
 | `.forge/.workflow.lock` | Workflow execution lock |
+| `.forge/.setup.lock` | Held while `frg config init` or Forge Desktop sets up the project, so only one setup runs at a time |
 | `.forge/work/**/traces/.heartbeat` | Agent heartbeat tracking |
 | `.forge/work/**/sessions.toml` | Session tracking within jobs |
 | `.forge/work/**/.sessions.lock` | Session lock files |
@@ -40,12 +41,13 @@ Always add these patterns to your `.gitignore`:
 .forge/cache/
 .forge/.context.lock
 .forge/.workflow.lock
+.forge/.setup.lock
 .forge/work/**/traces/.heartbeat
 .forge/config/telemetry.toml
 ```
 
 **Why exclude these:**
-- **Lock files** (`.context.lock`, `.workflow.lock`): Machine-specific, cause merge conflicts
+- **Lock files** (`.context.lock`, `.workflow.lock`, `.setup.lock`): Machine-specific, cause merge conflicts
 - **Cache**: Local performance optimization, not shareable
 - **Logs**: Developer diagnostics, not needed in version control
 - **Credential files**: Security risk (see [Security Best Practices](#security-best-practices))
@@ -105,6 +107,7 @@ Copy this template to get started:
 .forge/cache/
 .forge/.context.lock
 .forge/.workflow.lock
+.forge/.setup.lock
 .forge/work/**/traces/.heartbeat
 
 # Credential files (security - never commit)
@@ -150,6 +153,7 @@ Never commit files containing credentials:
 .forge/cache/
 .forge/.context.lock
 .forge/.workflow.lock
+.forge/.setup.lock
 .forge/work/**/traces/.heartbeat
 .forge/config/telemetry.toml
 ```
@@ -161,6 +165,7 @@ Never commit files containing credentials:
 .forge/work/
 .forge/.context.lock
 .forge/.workflow.lock
+.forge/.setup.lock
 .forge/work/**/traces/.heartbeat
 .forge/config/telemetry.toml
 ```
@@ -171,6 +176,7 @@ Never commit files containing credentials:
 .forge/cache/
 .forge/.context.lock
 .forge/.workflow.lock
+.forge/.setup.lock
 .forge/work/**/traces/.heartbeat
 .forge/config/telemetry.toml
 .forge/work/**/sessions.toml
@@ -190,6 +196,7 @@ Never commit files containing credentials:
    git rm -r --cached .forge/cache/
    git rm --cached .forge/.context.lock
    git rm --cached .forge/.workflow.lock
+   git rm --cached .forge/.setup.lock
    git rm --cached .forge/work/**/traces/.heartbeat
    ```
 3. **Commit the removal**:
@@ -221,6 +228,7 @@ In a monorepo, add patterns to the root `.gitignore`:
 **/.forge/cache/
 **/.forge/.context.lock
 **/.forge/.workflow.lock
+**/.forge/.setup.lock
 **/.forge/work/**/traces/.heartbeat
 **/.forge/config/telemetry.toml
 ```

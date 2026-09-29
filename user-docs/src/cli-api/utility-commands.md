@@ -591,10 +591,14 @@ Repository (press Enter to skip):
   `toolchain.toml` section and shown in the Phase 3 and Phase 4 summaries.
 - Security scanners are excluded from this prompt since they're not typically scoped to
   a single repository.
-- **Known limitation:** JIRA's host-only base URL example (e.g.
-  `https://yourcompany.atlassian.net`) has no path segment, so it doesn't pass the
-  reused Git URL validator. Either append a path segment (e.g. a project key) or press
-  Enter to skip and let JIRA fall back to auto-detection.
+
+The issue tracker's value depends on the tracker:
+
+| Issue tracker | Format | Example |
+|---------------|--------|---------|
+| GitHub Issues | `owner/repo` or a repository URL | `octocat/hello-world` |
+| Jira | Site URL, optionally with a project key | `https://yourcompany.atlassian.net/PROJ` |
+| Azure DevOps | `organization/project` or a project URL | `https://dev.azure.com/organization/project` |
 
 #### Model Overrides (Interactive Mode)
 

@@ -196,16 +196,18 @@ Progress Forge reports that the agent is installed but not authenticated, or dep
 
 #### Exact error message
 
-For the GitHub Copilot dependency path, Progress Forge returns:
+For GitHub Copilot, Progress Forge returns:
 
 ```text
 GitHub Copilot CLI is not authenticated.
 
 To fix:
-1. Run: gh auth login
+1. Run: copilot login
 2. Follow the authentication prompts
 3. Verify with: frg status
 ```
+
+For other agents, the message asks you to run the agent's own sign-in command.
 
 The status command displays `(not authenticated)`.
 
@@ -213,26 +215,26 @@ The status command displays `(not authenticated)`.
 
 The configured agent rejected its authentication check, the authentication session expired, or the credentials required by the external agent are unavailable.
 
-For the GitHub Copilot dependency check, Progress Forge runs `gh auth status` after confirming that the configured agent command is installed.
+To check authentication, Progress Forge sends a short prompt to the configured agent after confirming that its command is installed.
 
 #### Resolution
 
-1. Run the authentication command required by the selected AI coding agent.
+1. Run the sign-in command for the selected AI coding agent:
+
+   | Agent | Sign-in command |
+   |---|---|
+   | GitHub Copilot | `copilot login` |
+   | Claude Code | `claude auth login` |
+   | OpenCode | `opencode auth login` |
+
 2. Confirm that the command completes successfully.
 3. Run `frg status --verbose` again.
-
-For the GitHub Copilot dependency path, the source error provides this command:
-
-```bash
-gh auth login
-```
 
 #### Verification
 
 Run:
 
 ```bash
-gh auth status
 frg status --verbose
 ```
 
