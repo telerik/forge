@@ -61,6 +61,19 @@ This is the same directory the other Telerik and Kendo CLIs use, so a single `fr
 
 See [Authentication Commands](../cli-api/auth-commands.md) for the full flag reference for `frg auth login`, `frg auth logout`, `frg auth whoami` and `frg auth refresh`.
 
+## Sign-in and licensing in the desktop app
+
+The Progress Forge desktop app and the `frg` CLI share one encrypted session file and one
+license key file — signing in with either signs you in in both, and a license downloaded by
+either is immediately visible to the other. There is nothing to configure or copy between them.
+
+- Signing out in the desktop app (or with `frg auth logout`) is local only: it deletes the shared
+  session but never deletes the license key, matching `frg auth logout`'s behavior described
+  above.
+- You can start the 30-day trial from either place: the desktop app's `/plan` page, or
+  `frg auth trial` in the CLI. Both reach the same entitlement service and write the same license
+  file, so starting a trial in one immediately reflects in the other.
+
 ## Where to place the license file
 
 This section covers the manual path — CI, air-gapped machines, or a license supplied to you as a file. If you can run `frg auth login` interactively, it handles this for you.

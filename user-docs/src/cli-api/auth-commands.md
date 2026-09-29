@@ -60,6 +60,14 @@ ssh -L 30123:127.0.0.1:30123 your-remote-host
 
 Without the port forward, the browser's redirect back to the remote machine's loopback listener cannot reach it, and the login attempt will time out.
 
+### The desktop app uses the same flow
+
+Signing in from the Progress Forge desktop app's `/login` page performs the exact same
+loopback-callback sign-in described above — opening the system browser and completing the
+handshake on a local HTTP listener — and honours the same 5-minute (300-second) default timeout.
+The desktop app and `frg` share one session file, so a sign-in from either place signs you in in
+both.
+
 ### License entitlement check
 
 After sign-in succeeds, Forge verifies whether your account already has a Progress Forge license before downloading the local key. If a paid license or an existing trial is already present, the output is unchanged and the license download continues exactly as usual.
