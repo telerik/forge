@@ -217,8 +217,11 @@ Transaction events capture workflow execution metadata:
 | `callers` | keyword | Ancestor instance ids, root first. Absent for a root execution; `callers[0]` is the root, `callers.last()` is the direct parent, `callers.length` is the depth |
 | `start_time` | date | Workflow start timestamp |
 | `end_time` | date | Workflow end timestamp |
+| `start_commit_sha` | keyword | Git commit SHA at workflow start |
+| `end_commit_sha` | keyword | Git commit SHA at workflow end |
 | `success` | boolean | Whether workflow succeeded |
 | `trace_file` | keyword | Path to trace file (for linking) |
+| `error` | text | Error message, when the workflow failed |
 | `model` | keyword | AI model used (e.g., `claude-sonnet-5`). Value is `"not set"` for start events |
 | `role` | keyword | Role prompt used (e.g., `product_manager`). Value is `"none"` when custom agent is used |
 | `custom_agent` | keyword | Custom agent name (e.g., `python-expert`). Value is `"none"` when not configured |
@@ -227,9 +230,10 @@ Transaction events capture workflow execution metadata:
 | `token_usage.cached_tokens` | long | AI cached tokens (cache reads, not billed) |
 | `token_usage.cache_write_tokens` | long | AI cache write tokens (cache creation, priced separately; omitted when not reported) |
 | `token_usage.output_tokens` | long | AI output tokens consumed |
-| `workflow_type` | keyword | Workflow source: `builtin` or `custom` |
-| `role_prompt_type` | keyword | Role prompt source: `builtin` or `custom` |
-| `task_prompt_type` | keyword | Task prompt source: `builtin` or `custom` |
+| `token_usage.total_input_tokens` | long | Input tokens including cache reads |
+| `token_usage.total_output_tokens` | long | Output tokens including reasoning tokens |
+| `token_usage.reasoning_tokens` | long | Reasoning/thinking tokens. Omitted when the agent does not report them |
+| `token_usage.cost` | double | Cost in USD. Omitted when the agent does not report it |
 | `workflow_id` | keyword | Work item the workflow is running against |
 | `gate_id` | keyword | Approval gate identifier (`approval` events) |
 | `step` | keyword | Workflow state the approval gate belongs to (`approval` events) |
@@ -238,6 +242,16 @@ Transaction events capture workflow execution metadata:
 | `approval_method` | keyword | `manual` or `auto_bypassed` (`approval` events) |
 | `parameters` | object | Event-specific payload (state names, step/check ids, durations, conditions) |
 | `context` | object | Job context captured on the first transition (job dir, issue/PR/ticket id) |
+| `session_uuid` | keyword | Agent session id. Correlates token usage across executions that share one agent session |
+| `is_retry` | boolean | `true` when the execution was an auto-retry attempt. Omitted when `false` |
+| `retry_message` | text | Custom retry message, when one was supplied. Use `retry_message.keyword` for aggregation |
+| `context_sources.origin` | keyword | Origin of a loaded context source (e.g. `ProjectConfig`, `CliFile`). Nested field; query with a `nested` query |
+| `context_sources.path` | keyword | Path to a loaded context source, relative or absolute as provided. Nested field |
+| `context_sources.source_type` | keyword | Whether the context source was a file or directory. Nested field |
+| `context_sources.size` | long | Size of the loaded context source in bytes. Nested field |
+| `field` | keyword | Configuration field that changed (`config_change` events only) |
+| `old_value` | object | Previous value before the change (`config_change` events only) |
+| `new_value` | object | New value after the change (`config_change` events only) |
 | `invocation_source` | (dynamic) | `manual` or `flow`, derived from `callers`. No explicit mapping is defined for this field \u2014 it exists for the App Insights sink, not for OpenSearch aggregation |
 
 > **Querying invocation chains:** use `callers`, not `invocation_source`, for
@@ -289,67 +303,22 @@ Transaction events capture workflow execution metadata:
 
 > **Note on Agent Configuration Fields**: The `model`, `role`, and `custom_agent` fields always contain string values (never `null` or missing). When a value is not applicable, the field contains a sentinel string (`"not set"` or `"none"`) for consistent schema. Filter these out when querying real data.
 
-#### Workflow Customization Tracking
-
-The `workflow_type`, `role_prompt_type`, and `task_prompt_type` fields enable analysis of how workflow customizations affect performance and outcomes.
-
-**Field Values:**
-- `builtin` - Uses forge's built-in configuration
-- `custom` - Uses user-defined customization
-
-**Use Cases:**
-
-1. **Track customization adoption across organization:**
-   ```json
-   GET forge-transactions-*/_search
-   {
-     "aggs": {
-       "by_workflow_type": {
-         "terms": { "field": "workflow_type" }
-       }
-     }
-   }
-   ```
-
-2. **Compare performance of custom vs. built-in prompts:**
-   ```json
-   GET forge-transactions-*/_search
-   {
-     "aggs": {
-       "by_prompt_type": {
-         "terms": { "field": "role_prompt_type" },
-         "aggs": {
-           "avg_tokens": {
-             "avg": { "field": "token_usage.input_tokens" }
-           }
-         }
-       }
-     }
-   }
-   ```
-
-3. **Identify workflows using custom configurations:**
-   ```json
-   GET forge-transactions-*/_search
-   {
-     "query": {
-       "bool": {
-         "should": [
-           { "term": { "workflow_type": "custom" } },
-           { "term": { "role_prompt_type": "custom" } },
-           { "term": { "task_prompt_type": "custom" } }
-         ],
-         "minimum_should_match": 1
-       }
-     }
-   }
-   ```
-
-**Best Practices:**
-- Use these fields to measure the impact of prompt engineering efforts
-- Track which custom workflows are most frequently used
-- Compare token usage between built-in and customized workflows
-- Identify opportunities to promote successful customizations to built-in workflows
+> **Fields not sent to OpenSearch**
+>
+> `workflow_type`, `role_prompt_type` and `task_prompt_type` exist on the
+> local `transaction.jsonl` event schema (`WorkflowEvent`) but are **not**
+> uploaded to OpenSearch: the only setter, `with_workflow_metadata`, is never
+> called in production, so every emitted event would carry a permanently-null
+> value for all three fields. Rather than index dead columns, Issue #1431
+> removed them from the OpenSearch template and this reference.
+>
+> `invocation_source` **is** uploaded but deliberately left unmapped in the
+> index template (dynamic field, App Insights only) — use `callers` for
+> OpenSearch queries and aggregations instead.
+>
+> Populating these three fields with real data requires plumbing a
+> `catalog::registry::CommandSource` and a `prompt::types::PromptResolution`
+> into `ExecutionContext::log_workflow_complete`.
 
 See [Transaction Log Format](../reference/transaction-logs.md) for complete field documentation.
 
