@@ -174,17 +174,17 @@ Controls whether and how frg creates/checks out a dedicated git branch before wo
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `behavior` | string | No | Branch creation mode: "auto" (default) or "off" |
-| `base` | string | No | Ref to fork newly created branches from. Unset = fork from whatever is currently checked out |
-| `naming` | string | No | Naming template. Default: `"forge/issue-{issue}-{slug}"`. Tokens: `{target}`, `{action}`, `{slug}`, `{issue}`, `{date}` |
+| `behavior` | string | No | Branch creation mode: "off" (default) or "auto" |
+| `base` | string | No | Ref to fork newly created branches from. Unset = fork from whatever is currently checked out. Must be a valid Git branch name |
+| `naming` | string | No | Naming template. Default: `"forge/issue-{issue}-{slug}"`. Tokens: `{target}`, `{action}`, `{slug}`, `{issue}`, `{date}`. With the tokens filled in, must be a valid Git branch name |
 | `checkout` | boolean | No | Whether to check out the branch after creating it (default: `true`) |
-| `on_dirty` | string | No | What to do when the working tree is dirty: "carry" (default), "stash", or "error" |
+| `on_dirty` | string | No | What to do when the working tree is dirty: "carry" (default), "stash", or "error". Ignored when `checkout = false` |
 | `on_collision` | string | No | What to do when the resolved branch name already exists: "checkout" (default), "suffix", or "error" |
 
 **Example:**
 ```toml
 [branch]
-behavior = "auto"       # "auto" branches whenever commit instructions would be enabled; "off" never branches
+behavior = "off"        # "off" (default) never branches; "auto" branches whenever commit instructions would be enabled
 naming = "forge/issue-{issue}-{slug}"
 checkout = true
 on_dirty = "carry"       # "carry" | "stash" | "error"
@@ -193,8 +193,8 @@ on_collision = "checkout" # "checkout" | "suffix" | "error"
 ```
 
 **Behavior Options:**
-- `"auto"` (default): Create a branch exactly when the resolved commit instructions for that target/operation would be enabled (reuses the `[commit]` trigger table). The `pr` target never auto-branches, since PR operations act on an already-checked-out branch.
-- `"off"`: Never create or check out branches automatically, regardless of commit state.
+- `"off"` (default): Never create or check out branches automatically, regardless of commit state.
+- `"auto"`: Create a branch exactly when the resolved commit instructions for that target/operation would be enabled (reuses the `[commit]` trigger table). The `pr` target never auto-branches, since PR operations act on an already-checked-out branch. Opt in with `frg config set-branching auto`.
 
 **Related Documentation:** [Branch Configuration Guide](../configuration/branch-behavior.md)
 

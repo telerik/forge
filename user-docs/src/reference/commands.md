@@ -1016,8 +1016,39 @@ frg config set-base-branch develop
 
 **Notes**:
 - This is a project-level, team-shared setting written to `.forge/config/project.toml`'s `[branch]` table — not a per-job or per-user override. Commit the resulting change to share it with your team.
+- The ref must be a branch name Git accepts (see [Customize Branch Naming](../configuration/branch-behavior.md#customize-branch-naming)). Like every configuration change, the edited `project.toml` is validated as a whole before it's written; if validation fails, the file stays as it was.
 
-**Related Commands**: `config validate`
+**Related Commands**: `config set-branching`, `config validate`
+
+**Related Documentation**: [Branch Behavior Configuration](../configuration/branch-behavior.md)
+
+---
+
+#### `frg config set-branching`
+
+**Description**: Turn per-job branch creation on (`auto`) or off (`off`). Branching is off by default.
+
+**Usage Example**:
+```bash
+# Create a branch for every job that commits
+frg config set-branching auto
+
+# Work on the current branch again (the default)
+frg config set-branching off
+```
+
+**Common Use Cases**:
+- Opting in to agent-created branches after `frg config init`
+- Handing branch management back to a person or external automation
+
+**Prerequisites**:
+- Run inside a frg project (`.forge/config/project.toml` must already exist; run `frg config init` first)
+
+**Notes**:
+- This is a project-level, team-shared setting written to `.forge/config/project.toml`'s `[branch].behavior` — not a per-job or per-user override. Commit the resulting change to share it with your team.
+- The edited `project.toml` is validated as a whole before it's written; if validation fails, the file stays as it was.
+
+**Related Commands**: `config set-base-branch`, `config validate`
 
 **Related Documentation**: [Branch Behavior Configuration](../configuration/branch-behavior.md)
 

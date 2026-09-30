@@ -17,8 +17,8 @@ Use project-level branch behavior when one policy should apply across the reposi
 
 Typical choices include:
 
-- Keep the default `auto` behavior so NIA creates a branch exactly for the operations that would also commit.
-- Use `off` when a person or another automation system manages branch creation.
+- Keep the default `off` behavior when a person or another automation system manages branch creation. The agent works on the current branch.
+- Opt in to `auto` so NIA creates a branch exactly for the operations that would also commit.
 - Use `branch = "on"` or `branch = "off"` for a specific target or operation.
 - Set `base` when new branches should fork from a ref other than whatever is currently checked out.
 
@@ -51,30 +51,44 @@ NIA always supplies one of these branch configurations. Once a branch has been c
 
 ## Configure Project Defaults
 
-Set the project-wide behavior in `.forge/config/project.toml`:
-
-```toml
-[branch]
-behavior = "auto"
-```
-
-The `behavior` setting accepts these values:
-
-| Value | Required or optional | Effect |
-| --- | --- | --- |
-| `auto` | Optional; default | Creates a branch exactly when the resolved commit instructions for that target/operation would be enabled (reuses the `[commit]` trigger table). The `pr` target never auto-branches, since PR operations act on an already-checked-out branch. |
-| `off` | Optional | Forces explicit no-branch instructions for every operation, including operations that normally branch. |
-
-### Disable Branch Creation Globally
-
-Set the project behavior to `off` when branch creation is always managed manually or by external automation:
+Branching is off by default. `frg config init` writes this to `.forge/config/project.toml`:
 
 ```toml
 [branch]
 behavior = "off"
 ```
 
-Expected result: every workflow receives explicit no-branch instructions, including `code create`, which normally branches.
+The desktop setup wizard preselects **Create a branch per job** instead, and writes `behavior = "auto"` unless you choose **Work on the current branch**.
+
+The `behavior` setting accepts these values:
+
+| Value | Required or optional | Effect |
+| --- | --- | --- |
+| `off` | Optional; default | Forces explicit no-branch instructions for every operation. The agent works on the current branch. |
+| `auto` | Optional | Creates a branch exactly when the resolved commit instructions for that target/operation would be enabled (reuses the `[commit]` trigger table). The `pr` target never auto-branches, since PR operations act on an already-checked-out branch. |
+
+### Enable Branch Creation
+
+Opt in with the dedicated command, which performs a comment-preserving edit of `project.toml`:
+
+```bash
+frg config set-branching auto
+```
+
+Or set the value directly:
+
+```toml
+[branch]
+behavior = "auto"
+```
+
+Expected result: operations that commit receive create-branch instructions. Run `frg config set-branching off` to return to the default.
+
+In the desktop app, choose **Create a branch per job** on the **Source control** step of the setup wizard. The step also sets the base branch, naming template, checkout, dirty-tree, and collision options described below.
+
+### Keep Branch Creation Disabled
+
+Leave the project behavior at `off` when branch creation is always managed manually or by external automation. Every workflow receives explicit no-branch instructions, including `code create`, and agent-level `branch = "on"` overrides have no effect.
 
 ### Set the Base Branch
 
@@ -104,6 +118,8 @@ naming = "forge/issue-{issue}-{slug}"
 
 Supported tokens: `{target}`, `{action}`, `{slug}`, `{issue}`, `{date}`. This is the default template; override it when your team uses a different branch-naming convention.
 
+With its tokens filled in, `naming` must be a branch name Git accepts, and so must `base`: no spaces or control characters, none of `~ ^ : ? * [ \`, no `..`, `//` or `@{`, no leading `-` or `/`, no trailing `/` or `.`, and no part that starts with `.` or ends with `.lock`; `@` and `HEAD` are reserved. NIA rejects a `project.toml` that breaks these rules when it validates or writes the configuration.
+
 ### Control Whether the New Branch Is Checked Out
 
 ```toml
@@ -111,7 +127,7 @@ Supported tokens: `{target}`, `{action}`, `{slug}`, `{issue}`, `{date}`. This is
 checkout = false
 ```
 
-Expected result: NIA still instructs the agent to create the branch, but tells it to remain on the current branch instead of checking out the new one.
+Expected result: NIA still instructs the agent to create the branch, but tells it to remain on the current branch instead of checking out the new one. The agent's commits land on the current branch, and the new branch marks where the job started. The working tree is never switched, so `on_dirty` has no effect, and an `on_collision = "checkout"` collision reuses the existing branch without checking it out.
 
 ### Handle a Dirty Working Tree
 
@@ -126,6 +142,8 @@ on_dirty = "stash"
 | `stash` | Instructs the agent to `git stash push` before creating the branch, then `git stash pop` after checking it out. |
 | `error` | Instructs the agent to stop immediately and report instead of creating the branch. |
 
+Applies only when `checkout = true`.
+
 ### Handle a Branch Name Collision
 
 ```toml
@@ -135,7 +153,7 @@ on_collision = "suffix"
 
 | Value | Effect |
 | --- | --- |
-| `checkout` | Default. If the resolved branch name already exists, check it out instead of creating a new branch. |
+| `checkout` | Default. If the resolved branch name already exists, check it out instead of creating a new branch (with `checkout = false`, reuse it without checking it out). |
 | `suffix` | Append a short disambiguating suffix (e.g. a short commit SHA) to the resolved name before creating the branch. |
 | `error` | Stop immediately and report the conflict instead of creating or checking out any branch. |
 
@@ -164,6 +182,8 @@ The extended target and operation forms support `branch` values of `on` and `off
 | `operations."<target>.<operation>".branch` | One operation | `on`, `off` | Takes precedence over the target setting. |
 
 The selected agent matters. Configure the target and operation settings under the agent that NIA uses for the workflow.
+
+These overrides only apply when the project behavior is `auto`. With the default `off`, every operation receives no-branch instructions.
 
 ## Understand Resolution Precedence
 
@@ -202,7 +222,7 @@ The `--print-prompt` option is a diagnostic feature. Review its output before sh
 
 ### Require Manual Branch Creation
 
-Use a project-wide `off` setting:
+Keep the default project-wide `off` setting:
 
 ```toml
 [branch]
@@ -221,6 +241,8 @@ base = "develop"
 Use this when your team's integration branch is not the branch the agent happens to have checked out.
 
 ### Keep Code Creation Branching but Skip It for Review
+
+With the project behavior set to `auto`:
 
 ```toml
 [agent.github_copilot.operations]
@@ -246,9 +268,9 @@ Follow these practices when you configure branch behavior:
 
 **Symptom:** The agent is told not to create a branch during an operation that normally does.
 
-**Cause:** The project behavior is `off`, the selected agent has a target or operation setting of `off`, or the operation's commit trigger (the `auto` default) does not fire for this target/operation.
+**Cause:** The project behavior is `off` (the default), the selected agent has a target or operation setting of `off`, or the operation's commit trigger does not fire for this target/operation.
 
-**Resolution:** Check the project setting first, then the selected agent's operation and target settings. Set the relevant operation to `branch = "on"` when the workflow should receive branch instructions.
+**Resolution:** Check the project setting first and run `frg config set-branching auto` if branching is disabled. Then check the selected agent's operation and target settings. Set the relevant operation to `branch = "on"` when the workflow should receive branch instructions.
 
 ### Branch Creation Is Disabled Despite `branch = "on"`
 
@@ -256,7 +278,7 @@ Follow these practices when you configure branch behavior:
 
 **Cause:** The project-level setting is `behavior = "off"`, which has global priority.
 
-**Resolution:** Change the project behavior to `auto` when the project permits branch creation. Then run `frg config validate` and inspect the effective prompt.
+**Resolution:** Run `frg config set-branching auto` when the project permits branch creation. Then run `frg config validate` and inspect the effective prompt.
 
 ### A Later Command Does Not Create a New Branch
 
