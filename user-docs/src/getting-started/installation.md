@@ -165,6 +165,56 @@ is supported and links against your local glibc.
 
 ## Installation Methods
 
+### Install the Desktop App
+
+Desktop installers are published with each stable release in the public
+[`telerik/project-nia`](https://github.com/telerik/project-nia/releases) repository.
+Download the installer for your platform:
+
+| Platform | Installer assets |
+|----------|------------------|
+| Windows x86_64 | `progress-forge-desktop-*-x86_64-windows.msi` or `progress-forge-desktop-*-x86_64-windows-setup.exe` |
+| macOS Intel | `progress-forge-desktop-*-x86_64-macos.dmg` |
+| macOS Apple Silicon | `progress-forge-desktop-*-aarch64-macos.dmg` |
+| Linux x86_64 | `progress-forge-desktop-*-x86_64-linux.AppImage` or `progress-forge-desktop-*-amd64-linux.deb` |
+
+Windows installers are Authenticode signed with the Progress EV certificate. macOS DMGs
+contain a Developer ID signed app and are notarized and stapled by Apple. Every desktop
+installer also has a detached `.asc` signature and is listed in `SHA256SUMS`.
+
+The desktop app and CLI share the same Progress Forge configuration and licensing behavior.
+
+#### Update the Desktop App
+
+Open **About & updates** from the profile menu, or from the sign-in screen, to see
+the installed version, check for updates, and change the update settings:
+
+| Setting | Default | Behavior |
+|---------|---------|----------|
+| Notify me about new versions | On | Checks the public releases in the background and shows a notice with an **Update** button. |
+| Download updates automatically | Off | Downloads new versions in the background. Progress Forge asks before it restarts to install them. |
+| Include prereleases | Off | Also offers `-dev.N` prereleases published in the public repository. |
+
+With both background settings off, the app makes no update requests until you select
+**Check for updates**. Every update is verified against the Progress Forge updater
+signature before it is installed, and the app never restarts without your confirmation.
+
+How updates are installed depends on how you installed the app:
+
+| Installation | Update |
+|--------------|--------|
+| macOS app in the Applications folder | Installed from the app |
+| Windows `setup.exe` | Installed from the app; the installer closes and restarts Progress Forge |
+| Linux AppImage | Installed from the app when the AppImage is in a writable location |
+| Windows `.msi`, Linux `.deb` | The app announces new versions and links to the download page; install the new package the same way |
+
+An app opened directly from the DMG or the Downloads folder cannot replace itself; move
+it to the Applications folder first. After an update, Progress Forge shows the release
+notes for the new version once. Open them later with **Release notes** in
+**About & updates**.
+
+Installations from releases without in-app updates must be updated manually once.
+
 ### Use the Quick Installer
 
 The quick installer detects the release asset for your platform and provides the shortest installation path. Progress Forge releases are published in the public [`telerik/project-nia`](https://github.com/telerik/project-nia) repository.
