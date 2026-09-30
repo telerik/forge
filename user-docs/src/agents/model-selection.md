@@ -156,32 +156,66 @@ The operation key uses the form `target.operation`. Progress Forge checks the co
 
 ## Use Supported Model Names
 
-Progress Forge validates model names with agent-specific patterns. Even though it is currently recommended to use the Claude Sonnet-4.5 and Opus-4.5 models, Progress Forge does not restrict you from using others. Validation produces warnings for unknown models; it does not block execution when the name has a valid format.
+Progress Forge does not maintain a list of known models. It checks only
+that a model name is non-empty and uses safe characters, then passes the
+name to the selected agent unchanged. The agent itself is the source of
+truth for which models exist: if a model is unavailable, the agent reports
+its own error at execution time.
 
-Progress Forge warns when a model is empty, contains invalid characters, or does not match the selected agent's known patterns. A model that has a valid-looking format but is not in the known list produces a warning and execution continues.
+Progress Forge warns only when a model name is empty or contains
+characters outside the allowed set. It never warns that a model is
+"unknown" or "unrecognized". Warnings are non-fatal and execution
+continues.
 
-For GitHub Copilot, the warning uses this form:
+For GitHub Copilot, a malformed name produces a warning of this form:
 
-```bash
-Warning: Model 'gpt-6-preview' doesn't match known patterns.
-Known patterns for github_copilot: claude-{tier}-{version}, gpt-{version}[-suffix], or 'auto'
+```text
+Warning: Model name 'gpt 6 preview' for agent 'github_copilot' contains a disallowed character
+(only alphanumeric, dash, underscore, dot, and a single '/' are allowed). Allowed formats:
+'model-name' or 'provider/model-name' using alphanumeric, dash, underscore, dot, and forward
+slash (/) characters.
 ```
 
-### GitHub Copilot Model Patterns
+The warning explains the specific problem (for example an overlength name,
+more than one `/`, or a name starting with a special character) instead of a
+single generic message, so you know exactly what to fix.
 
-GitHub Copilot accepts these patterns:
+### Allowed name format
 
-- `auto`.
-- `claude-{tier}-{version}`.
-- `gpt-{version}` with optional `-codex`, `-mini`, or `-max` suffixes.
+A model name is accepted when it:
 
-Model names are case-sensitive. The pattern validator allows future and preview versions that match these forms, but the selected agent still determines whether a model is available at execution time.
+- is non-empty and at most 128 characters
+- contains only letters, digits, `-`, `_`, and `.`
+- optionally uses a single `/` in `provider/model` form, with both parts
+  non-empty
+- starts each part with a letter or digit
+- has no two adjacent special characters (for example `--` or `..`)
+
+Names are case-sensitive and are forwarded to the agent exactly as written.
+Examples of accepted names: `auto`, `flash-lite`, `claude-opus-5.5`,
+`gpt-5.6-sol`, `mai-code-1.1-flash`, `github-copilot/claude-sonnet-5`.
+
+Model names are case-sensitive. Because Forge performs no vendor-specific
+checks, brand-new and preview models work immediately without a Forge
+update.
 
 ### Other Agent Models
 
-Progress Forge's model registry provides agent-specific validation for the configured agent. OpenCode profile output uses `auto` as a provider-neutral value. Claude Code profile output uses Anthropic model names.
+Progress Forge does not maintain a registry of models for any agent.
+OpenCode profile output uses `auto` as a provider-neutral value. Claude Code
+profile output uses Anthropic model names.
 
-Do not treat the representative model names in Progress Forge's registry as a complete catalog of models provided by an external agent.
+Claude Code additionally rejects `_` and `/` in a model name before
+forwarding it to the CLI, because the Claude Code CLI itself only accepts
+alphanumeric characters, dashes, and dots (for example
+`claude-sonnet-4-20250514`). Forge's shared sanitization described above
+still permits `_` and a single `/` for other agents (for example
+`provider/model-name`); Claude Code's stricter, Anthropic-specific check is
+layered on top and produces its own error identifying Claude Code as the
+source, rather than a generic Forge sanitization warning.
+
+The representative model names shown in this document are examples, not a
+complete catalog of models provided by an external agent.
 
 ## Initialize Model Profiles
 
@@ -210,7 +244,7 @@ The `--agent` flag is required when you use `--models`. The command supports `gi
 
 Most agents now support automatic model routing. Progress Forge does support the use of `auto` as a model name which is then passed to the selected agent as the model name. While supported, we do not recommend this method as it leads to much more variation in output quality and is not reliable. Progress Forge does not control the agent algorithm that selects a model from prompt complexity, context size, cost, or latency. The selected external agent controls the meaning of `auto`.
 
-The following existing example is valid for GitHub Copilot's accepted model pattern:
+The following example uses an accepted model name format:
 
 **Example with overrides:**
 ```toml
@@ -250,7 +284,9 @@ frg config init --agent opencode --models stable
 
 ### Fix an Unrecognized Model
 
-If the external agent rejects a model, verify the exact model name with that agent's documentation. Progress Forge's pattern validation does not prove that the external agent or provider offers the model.
+If the external agent rejects a model, verify the exact model name with that agent's documentation. Progress Forge does not check model
+availability, so an agent rejection is the first and only signal that a
+name is wrong.
 
 ```
 Error: Unknown model 'custom-model'
@@ -265,7 +301,7 @@ Check the configuration in this order:
 3. Check the target name against the command target.
 4. Check the operation key format, such as `issue.draft`.
 5. Check for a command-line model override, which takes precedence over file settings.
-6. Check for warnings from model validation.
+6. Check for warnings about empty or malformed model names.
 
 ### Fix Invalid Model Settings
 
@@ -273,7 +309,6 @@ Progress Forge reports these model configuration problems as warnings:
 
 - An empty model string.
 - Invalid model-name characters. Valid names use alphanumeric characters, dashes, underscores, dots, and forward slashes in a model name or provider/model name.
-- A model that does not match the selected agent's known patterns.
 
 Review the warning location, such as `model`, `targets.issue`, or `operations.issue.draft`, and correct the corresponding value.
 
@@ -285,7 +320,8 @@ Apply these practices when managing model configuration:
 - Use generated profiles when you want Progress Forge's agent-specific mappings.
 - Use operation overrides for high-impact actions instead of changing every workflow.
 - Keep model names exactly as the selected agent expects them.
-- Treat unknown-model warnings as a prompt to verify provider availability.
+- Verify model availability with the agent's own documentation; Forge
+  does not track it.
 - Test a profile in the selected agent before relying on it in an automated workflow.
 - Review target and operation precedence when a setting appears to be ignored.
 
