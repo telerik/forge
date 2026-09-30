@@ -170,6 +170,59 @@ The `model`, `role`, and `custom_agent` fields capture the effective AI agent co
 - `"not set"`: Value wasn't available at event time (used in start events before configuration resolution)
 - `"none"`: Intentional absence (e.g., no custom agent configured, or role not used because custom agent was used)
 
+#### Provenance Fields
+
+`workflow_type`, `role_prompt_type` and `task_prompt_type` record where the
+executed workflow definition and the prompts actually used came from.
+
+| Field | Values | Meaning |
+|-------|--------|---------|
+| `workflow_type` | `built-in`, `modified`, `custom` | `modified` means a built-in definition with `[[prompt_overrides]]` applied; `custom` means a user-defined target or operation |
+| `role_prompt_type` | `built-in`, `custom`, `disabled` | `custom` covers root overrides, service overrides and generated content; `disabled` is a sentinel meaning no role prompt was composed because a custom agent was used or roles were disabled via `--role none` |
+| `task_prompt_type` | `built-in`, `custom` | Same classification as `role_prompt_type`, for the task prompt |
+
+`workflow_type` and `task_prompt_type` use **no sentinel value**: when the
+source cannot be determined the key is omitted from the JSON entirely. That
+happens for orchestrator commands (`frg app`, `frg workflow run`,
+`frg learn`), and for `task_prompt_type` on an auto-retry continuation, whose
+prompt is a runtime-generated retry message rather than a resolved task
+prompt.
+
+`role_prompt_type` is different: a custom agent or `--role none` is a
+*known, deliberate* absence, not an unresolved one, so it is recorded as the
+explicit sentinel `disabled` rather than omitted. This lets analytics
+distinguish "we know no role prompt was used" from "we don't know" — a query
+for `role_prompt_type: disabled` counts confirmed role-less executions, while
+an omitted key still means the call site never computed role provenance at
+all (the same orchestrator-command case as `workflow_type`).
+
+Events written before Forge 4.7 omit all three keys; readers must tolerate a
+missing key, not only a `null` value.
+
+```json
+{
+  "event_type": "workflow",
+  "command": "issue draft",
+  "workflow_type": "modified",
+  "role_prompt_type": "custom",
+  "task_prompt_type": "built-in",
+  "success": true
+}
+```
+
+A run using a custom agent, or `--role none`, instead reports:
+
+```json
+{
+  "event_type": "workflow",
+  "command": "code implement",
+  "workflow_type": "built-in",
+  "role_prompt_type": "disabled",
+  "task_prompt_type": "built-in",
+  "success": true
+}
+```
+
 **Use Cases:**
 - **Cost Tracking**: Group workflows by `model` to calculate usage costs per model tier
 - **Performance Analysis**: Compare workflow success rates and durations across different models

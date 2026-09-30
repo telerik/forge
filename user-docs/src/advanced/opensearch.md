@@ -226,6 +226,9 @@ Transaction events capture workflow execution metadata:
 | `role` | keyword | Role prompt used (e.g., `product_manager`). Value is `"none"` when custom agent is used |
 | `custom_agent` | keyword | Custom agent name (e.g., `python-expert`). Value is `"none"` when not configured |
 | `agent` | keyword | AI agent platform (e.g., `copilot`, `opencode`) |
+| `workflow_type` | keyword | Source of the executed workflow definition: `built-in`, `modified` (built-in definition with prompt overrides) or `custom` (user-defined). Absent when the execution did not resolve a single catalog command (`frg app`, `frg workflow run`, `frg learn`). Distinct from `parameters.workflow_type` on workflow-engine events, which carries a workflow *name* such as `issue-to-pr` |
+| `role_prompt_type` | keyword | Source of the role prompt actually used: `built-in` (embedded resource), `custom` (user or service override), or the sentinel `disabled` when a custom agent was used or roles were disabled via `--role none` (deliberate, known absence). Omitted (not `null`, not `disabled`) only when the execution did not compose any prompt at all — e.g. `frg app`, `frg workflow run` |
+| `task_prompt_type` | keyword | Source of the task prompt actually used: `built-in` or `custom`. Absent when no task prompt was composed, and on auto-retry continuations, whose prompt is a runtime-generated retry message rather than a resolved task prompt |
 | `token_usage.input_tokens` | long | AI input tokens consumed |
 | `token_usage.cached_tokens` | long | AI cached tokens (cache reads, not billed) |
 | `token_usage.cache_write_tokens` | long | AI cache write tokens (cache creation, priced separately; omitted when not reported) |
@@ -303,22 +306,52 @@ Transaction events capture workflow execution metadata:
 
 > **Note on Agent Configuration Fields**: The `model`, `role`, and `custom_agent` fields always contain string values (never `null` or missing). When a value is not applicable, the field contains a sentinel string (`"not set"` or `"none"`) for consistent schema. Filter these out when querying real data.
 
-> **Fields not sent to OpenSearch**
->
-> `workflow_type`, `role_prompt_type` and `task_prompt_type` exist on the
-> local `transaction.jsonl` event schema (`WorkflowEvent`) but are **not**
-> uploaded to OpenSearch: the only setter, `with_workflow_metadata`, is never
-> called in production, so every emitted event would carry a permanently-null
-> value for all three fields. Rather than index dead columns, Issue #1431
-> removed them from the OpenSearch template and this reference.
+> **Note on provenance fields**: `workflow_type` and `task_prompt_type` are
+> **omitted entirely** (not `null`) when the execution could not determine
+> them — orchestrator commands such as `frg app`, `frg workflow run` and
+> `frg learn` resolve no single catalog command, and `task_prompt_type` is
+> also omitted on auto-retry continuations, whose prompt is a
+> runtime-generated retry message. `role_prompt_type` additionally uses the
+> explicit sentinel value `disabled` for a *known* absence — a custom agent
+> was used, or roles were disabled via `--role none` — distinct from the
+> merely-omitted case above where role provenance was never computed at all.
+> Absence is still meaningful: a term aggregation on these fields counts every document that
+> carries a value, including the `disabled` sentinel bucket for `role_prompt_type` — it does
+> not distinguish "known and non-`disabled`" from "known and `disabled`" without an explicit
+> filter. They were unmapped between Issue #1431 and Issue #1444, so
+> documents indexed in that window carry no values.
 >
 > `invocation_source` **is** uploaded but deliberately left unmapped in the
 > index template (dynamic field, App Insights only) — use `callers` for
 > OpenSearch queries and aggregations instead.
->
-> Populating these three fields with real data requires plumbing a
-> `catalog::registry::CommandSource` and a `prompt::types::PromptResolution`
-> into `ExecutionContext::log_workflow_complete`.
+
+**Example queries**
+
+Share of executions running a customised workflow definition:
+
+```json
+GET forge-transactions-*/_search
+{
+  "size": 0,
+  "query": {"bool": {"filter": [
+    {"term": {"event_type": "workflow"}},
+    {"exists": {"field": "success"}}
+  ]}},
+  "aggs": {"by_source": {"terms": {"field": "workflow_type"}}}
+}
+```
+
+Executions that ran against an overridden task prompt:
+
+```json
+GET forge-transactions-*/_search
+{
+  "query": {"bool": {"filter": [
+    {"term": {"event_type": "workflow"}},
+    {"term": {"task_prompt_type": "custom"}}
+  ]}}
+}
+```
 
 See [Transaction Log Format](../reference/transaction-logs.md) for complete field documentation.
 
