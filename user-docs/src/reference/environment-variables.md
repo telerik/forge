@@ -75,9 +75,9 @@ jobs:
 
 ### `FORGE_TELEMETRY_PATH`
 
-Override the default telemetry configuration file path.
+Override the default path of the telemetry configuration file that holds the usage data (`[usage] enabled`) setting.
 
-**Default**: `.forge/config/telemetry.toml` or `~/.config/forge/telemetry.toml`
+**Default**: `~/.config/forge/telemetry.toml`
 
 ---
 

@@ -105,7 +105,7 @@ default** and can be disabled via configuration — see "Disabling Telemetry" be
 
 | Destination | Enabled by | Data collected |
 |-------------|-----------|-----------------|
-| Progress Analytics (App Insights) | On by default, config-gated | Command, version, OS, agent name, model, invocation source, success, hashed machine ID, user ID |
+| Progress Analytics (App Insights) | On by default, config-gated | Command name and ID, client, version and OS, agent and model, invocation source, success or failure stage, license type and license check result, sign-in result, hashed machine ID, user ID |
 | Self-hosted OpenSearch | Off unless you configure a backend in `telemetry.toml` | Every transaction event frg writes locally, plus completed trace files and system logs |
 | Self-hosted OTEL | Off unless you configure a backend in `telemetry.toml` | Transaction events converted to OTLP spans — trace files, system logs and approval PII are OpenSearch-only, they are never sent to OTEL |
 
@@ -143,7 +143,7 @@ Telemetry covers every `frg` command, not just AI-workflow commands (`ask`, `iss
 
 **Option 1: Configuration file**
 
-Edit `~/.config/forge/telemetry.toml` or `.forge/config/telemetry.toml`:
+Edit `~/.config/forge/telemetry.toml`:
 
 ```toml
 [usage]
@@ -164,7 +164,7 @@ The environment variable takes precedence over configuration files.
 frg telemetry off
 ```
 
-Telemetry configuration is managed in `~/.config/forge/telemetry.toml` or `.forge/config/telemetry.toml`.
+The usage telemetry setting is per user and is stored in `~/.config/forge/telemetry.toml` (or the file set by `FORGE_TELEMETRY_PATH`). A project-level `.forge/config/telemetry.toml` does not turn usage telemetry on or off. The same setting is shown as **Share usage data** under **Privacy Settings** in the desktop app.
 
 See: `src/telemetry/usage.rs` for implementation details.
 

@@ -1359,7 +1359,7 @@ frg telemetry status
 
 #### telemetry on
 
-Enable usage telemetry. Writes `[usage] enabled = true` to telemetry.toml.
+Enable usage telemetry. Writes `[usage] enabled = true` to the user-level `~/.config/forge/telemetry.toml`.
 
 **Example:**
 ```bash
@@ -1368,7 +1368,7 @@ frg telemetry on
 
 #### telemetry off
 
-Disable usage telemetry. Writes `[usage] enabled = false` to telemetry.toml.
+Disable usage telemetry. Writes `[usage] enabled = false` to the user-level `~/.config/forge/telemetry.toml`.
 
 **Example:**
 ```bash
