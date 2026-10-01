@@ -279,7 +279,7 @@ failure.
 frg status --verbose
 ```
 
-Set `NIA_LOG=debug` to see which model NIA used for the check, or that no model
+Set `RUST_LOG=debug` to see which model NIA used for the check, or that no model
 name was sent because none is configured.
 
 ### Authentication Details Are Unclear
