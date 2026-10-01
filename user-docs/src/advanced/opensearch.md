@@ -207,7 +207,7 @@ Transaction events capture workflow execution metadata:
 | `@timestamp` | date | Event timestamp (not upload time) |
 | `event_type` | keyword | Event type (see the table below) |
 | `job_id` | keyword | Unique job identifier |
-| `command` | keyword | Workflow command executed |
+| `command` | keyword | Workflow command executed. For stateful workflow runs this is the stable literal `workflow run`; use `workflow_name` to identify which workflow definition ran |
 | `repository` | keyword | Repository name |
 | `repository_owner` | keyword | Repository owner |
 | `repository_remote` | keyword | Git remote URL (sanitized) |
@@ -238,6 +238,7 @@ Transaction events capture workflow execution metadata:
 | `token_usage.reasoning_tokens` | long | Reasoning/thinking tokens. Omitted when the agent does not report them |
 | `token_usage.cost` | double | Cost in USD. Omitted when the agent does not report it |
 | `workflow_id` | keyword | Work item the workflow is running against |
+| `workflow_name` | keyword | Canonical name of the workflow definition executed by a `workflow run` anchor (e.g. `issue-to-pr`). Absent on historical records and on other commands |
 | `gate_id` | keyword | Approval gate identifier (`approval` events) |
 | `step` | keyword | Workflow state the approval gate belongs to (`approval` events) |
 | `approver_email` | keyword | Email of the approver (`approval` events). Hashed when `[privacy] strict_privacy = true` |
@@ -264,12 +265,42 @@ Transaction events capture workflow execution metadata:
 > `manual`/`flow` distinction as a low-cardinality string for App Insights and has
 > no explicit mapping in the index template.
 
-> **An ancestor id does not guarantee an ancestor document.** Commands that only
-> orchestrate — `frg workflow run`, `frg app <target> <op>`, `frg learn run` —
-> appear in `callers` but emit no transaction document of their own, so
-> `callers[0]` is often an id with no matching `instance_id`. Treat `callers` as
-> the authoritative chain and do not assume a lookup will resolve. In OTEL the
-> same thing shows up as a trace whose root span is missing.
+> **An ancestor id does not guarantee an ancestor document.** Some commands that
+> only orchestrate — `frg app <target> <op>`, `frg learn run` — appear in
+> `callers` but emit no transaction document of their own, so `callers[0]` is
+> sometimes an id with no matching `instance_id`. Treat `callers` as the
+> authoritative chain and do not assume a lookup will resolve. In OTEL the same
+> thing shows up as a trace whose root span is missing. (`frg workflow run` is
+> not in this category: since Issue #1462 it always emits its own run-level
+> anchor document, described below.)
+
+### Stateful workflow run labelling (changed)
+
+`frg workflow run` records one run-level transaction pair per run. Its `command` is the stable
+literal `workflow run`; the workflow definition that executed is in `workflow_name`
+(e.g. `issue-to-pr`).
+
+Earlier releases labelled this pair with the workflow name in `command`. Queries, dashboards and
+alerts that filtered `command: "issue-to-pr"` (or any other workflow name) must switch to
+`workflow_name: "issue-to-pr"`. Records written before this change are unaffected and keep the
+old label with no `workflow_name`, so mixed-period analytics must match on both.
+
+`workflow_name` identifies *which* workflow definition ran; `workflow_type`, `role_prompt_type`
+and `task_prompt_type` describe *where* that definition and its prompts came from. They are
+populated at different anchors and are independent — a record may carry either, both, or
+neither.
+
+Deliberate scope boundaries of this change:
+
+- Pre-execution validation failures (disabled workflow, invalid `--start-from`/`--ends-at`,
+  missing required context) emit **no** `WorkflowEvent`. This is **not** full parity with the
+  pre-#1274 behavior, where `--start-from` validation ran inside the outer anchor. Restoring
+  that coverage is out of scope for #1462.
+- `frg workflow run --dry-run` and `--list-states` emit no `WorkflowEvent`, matching both
+  current and pre-migration behavior.
+- Manager lock/setup failures (e.g. another run already holding the repository lock) **are**
+  covered by the run anchor: the anchor opens before `WorkflowManager` lock acquisition, so a
+  `LockHeld` failure still completes the anchor document with `success: false`.
 
 #### Event Types
 
