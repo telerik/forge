@@ -319,6 +319,21 @@ Follow these practices when you configure and run AI coding agents:
 - Inspect the generated changes, command output, and session records before accepting results.
 - Keep the selected agent and model documented for reproducible team workflows.
 
+## Beta Terms Acknowledgement in the Desktop App
+
+The desktop app shows the beta terms the first time you add a project. After you
+select **I understand**, the app does not show them again for later projects.
+
+- The acknowledgement applies to your user account on this computer and covers every project you add afterward.
+- The app records it in `beta_consent.toml` in your user configuration directory:
+  - Linux and macOS: `$XDG_CONFIG_HOME/forge/`, `~/.config/forge/`, or `~/.forge/`
+  - Windows: `%APPDATA%\forge\`
+- Every project you add records the acknowledgement in the `[beta_consent]` section of its `.forge/config/project.toml`.
+- To see the beta terms again, delete `beta_consent.toml`.
+
+The CLI does not read `beta_consent.toml`. It checks the acknowledgement recorded in the
+repository's configuration, so the CLI does not ask again in a project added by the desktop app.
+
 ## CI/CD Environment Setup
 
 When running Progress Forge in CI/CD pipelines, you must acknowledge beta software terms
