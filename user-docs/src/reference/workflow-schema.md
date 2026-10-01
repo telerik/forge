@@ -4,7 +4,7 @@ This document provides a complete reference for the workflow TOML schema used to
 
 ## File Location
 
-Workflow files are located in `.forge/config/workflows/` with the `.toml` extension. Each file defines one workflow.
+Workflow files are located in `.forge/config/workflows/` with the `.toml` extension. Each file defines one workflow. This schema applies equally whether the file is hand-authored, generated via `frg config export --workflows`, or created/edited through the desktop app's workflow editor — see [Authoring from the Desktop App](../workflows/introduction.md#authoring-from-the-desktop-app) for the desktop-specific caveats (built-ins are enable/disable only, and structural desktop edits do not preserve comments).
 
 ## Schema Version
 

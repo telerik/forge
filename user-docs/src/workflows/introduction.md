@@ -56,6 +56,13 @@ frg workflow list --verbose
 
 ## Running Workflows
 
+The desktop app's workflow launcher starts the selected workflow in the project engine, using
+the selected issue ID and any requested start/end state and approval options. Its task view
+replays engine progress and accepts approval requests; Cancel sends a cancellation request to
+the engine. A workflow run is hosted by the open desktop app and does not survive app shutdown.
+Disabled workflows cannot be launched. A changed workflow definition must be reloaded before
+saving if another client edited it in the meantime.
+
 ### Basic Execution
 
 ```bash
@@ -416,6 +423,31 @@ To see which state to resume from, check the error message when a workflow fails
 | **Approval Gates** | Require human decisions (prod deploys) |
 | **Pre/Post Steps** | Environment setup, validation checks |
 | **Escape Conditions** | Safety limits on loops/retries |
+
+## Authoring from the Desktop App
+
+Workflows aren't CLI-only: the desktop app can list, create, edit, validate, and delete
+workflows too. Both clients read and write the same `.forge/config/workflows/` directory, so a
+workflow created in the desktop app is immediately visible to `frg workflow run` and vice versa —
+there is no separate desktop-only workflow store.
+
+**Built-in workflows can be enabled or disabled from either client, but not edited or deleted.**
+To customize a built-in, duplicate it (the desktop app's "Duplicate" action, or `frg config
+export --workflows` on the CLI) to create an editable repository-tier copy under
+`.forge/config/workflows/`, then edit the copy. This is a deliberate constraint, not a missing
+feature: it keeps the bundled workflows reproducible across upgrades while still letting you turn
+individual built-ins off (for example, if your team standardizes on a customized replacement).
+
+**Description-only desktop edits preserve TOML comments and formatting.** Other edits serialize
+the workflow again and remove comments. The engine preserves workflow settings the editor does
+not expose, validates the complete result before saving, and leaves the original file unchanged
+if validation fails. For workflows with hand-written comments, use a text editor for structural
+changes or re-add comments afterward.
+
+The desktop check editor offers check types whose inputs it can configure. Existing advanced
+checks, such as `command_success`, remain visible; edit their check-specific settings in TOML.
+Changing a workflow description or another supported field in the desktop preserves those
+unexposed settings.
 
 ## Workflow Discovery
 
