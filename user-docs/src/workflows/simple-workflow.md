@@ -172,17 +172,21 @@ Workflows automatically move between states based on command results:
 - If a command fails, transition to `on_failure` state
 - If the target state is terminal, the workflow ends
 
-## Workflow Resumption
+## Starting from a Specific State
 
-If a workflow is interrupted (Ctrl+C, system crash), you can manually resume from a specific state:
+`--start-from` creates a new workflow run beginning at the named state:
 
 ```bash
 frg workflow run <workflow-name> --start-from <STEP_NAME>
 ```
 
-**Note**: Running `frg workflow run <workflow-name>` without `--start-from` will start from the initial state, not from where the workflow was interrupted. You must explicitly use the `--start-from` flag to resume from a specific state.
+It does not resume the interrupted process, rerun skipped steps, or undo side effects from the
+previous run. Verify that the target's prerequisites and required artifacts are already present
+before starting there.
 
-To see which state to resume from, check the error message when a workflow fails - it provides a helpful hint with the exact command to retry.
+Use `frg workflow run <workflow-name> --list-states` to inspect states. Authors can mark states
+whose prerequisites are safe to assume with `is_entry_point = true`; they are shown as
+`[recommended start]`.
 
 ## Common Customizations
 

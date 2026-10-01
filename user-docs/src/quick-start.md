@@ -437,7 +437,7 @@ If a check fails, fix that check before continuing. Common causes include an old
 
 You just ran the Issue-to-PR lifecycle step by step — planning, implementation, build, test, review, and pull request. Forge can orchestrate that entire sequence for you as a single, stateful workflow.
 
-> **This is the payoff: `frg workflow run issue-to-pr`.** With the issue context set, this one command chains every step you performed by hand — `frg issue plan`, `frg code create`, `frg code build`, `frg code test`, `frg code review`, and the pull request operations — into a resumable state machine with approval gates, automatic retries, and a full audit trail. It is the recommended way to run the workflow once you are comfortable with the individual steps.
+> **This is the payoff: `frg workflow run issue-to-pr`.** With the issue context set, this one command chains every step you performed by hand — `frg issue plan`, `frg code create`, `frg code build`, `frg code test`, `frg code review`, and the pull request operations — into a state machine with approval gates, automatic retries, and a full audit trail. If a run is interrupted, start a fresh run, optionally from a later state whose prerequisites are already satisfied. It is the recommended way to run the workflow once you are comfortable with the individual steps.
 
 Set the issue context, then run the workflow:
 
@@ -455,11 +455,17 @@ frg workflow run issue-to-pr --bypass-approvals
 # Validate the workflow without executing it
 frg workflow run issue-to-pr --dry-run
 
-# Resume an interrupted run from a specific step
+# Start a new run from a specific state
 frg workflow run issue-to-pr --start-from create_code
 ```
 
-The workflow pauses at approval gates so you stay in control, and it resumes automatically if a run is interrupted. See [Introduction to Workflows](./workflows/introduction.md) for the built-in workflows, states, and transitions.
+`--start-from` creates a fresh run and does not undo previous side effects; verify the selected
+state's prerequisites first. `--list-states` marks author-recommended start states.
+
+The workflow pauses at approval gates so you stay in control. If a run is interrupted, start a new
+run, using `--start-from` only for a state whose prerequisites are already met. See
+[Introduction to Workflows](./workflows/introduction.md) for the built-in workflows, states, and
+transitions.
 
 ## Summary
 

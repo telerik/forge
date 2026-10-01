@@ -1415,11 +1415,13 @@ frg workflow run issue-to-pr --dry-run
 **Options**:
 - `--list-states`, `-l` - List all workflow states without executing
   - Displays state names, types, and descriptions
+  - Marks the initial state with `*`, author-recommended `--start-from` states with
+    `[recommended start]`, and `--ends-at` targets with `[--ends-at ok]`
   - Use to discover valid values for `--start-from` and `--resume-at`
   - No workflow execution or lock acquisition occurs
-  - Output shows initial state with `*` marker
 
-- `--start-from <state>` - Resume execution from a specific state
+- `--start-from <state>` - Start a new run from a specific state. This does not resume a previous
+  process or undo side effects from skipped states; verify the target's prerequisites first.
 - `--ends-at <state>` - Stop execution right before entering the named state, without running it.
   The state must be marked `is_exit_point = true` in the workflow definition (an author-certified
   safe stopping point); reaching it is reported as a successful, `stopped_early` run. Use
@@ -1458,7 +1460,8 @@ frg workflow run issue-to-pr --dry-run
 
 ---
 
-> **Tip**: Use `--list-states` to discover valid state names before using `--start-from` to resume workflows.
+> **Tip**: Use `--list-states` to discover valid state names before using `--start-from`; prefer
+> states marked `[recommended start]`.
 
 ---
 

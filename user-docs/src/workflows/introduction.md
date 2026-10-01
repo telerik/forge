@@ -77,7 +77,7 @@ frg workflow run issue-to-pr
 
 | Option | Description |
 |--------|-------------|
-| `--start-from <STEP_NAME>` | Start from a specific step (for recovery) |
+| `--start-from <STEP_NAME>` | Start a new run from a specific state (for recovery) |
 | `--bypass-approvals` | Skip approval gates (for CI/automation); loop-escape approvals still require manual review |
 | `--dry-run` | Validate workflow without executing |
 | `--quiet` / `-q` | Suppress output except errors |
@@ -94,7 +94,7 @@ frg workflow run issue-to-pr --bypass-approvals
 # Validate without executing
 frg workflow run issue-to-pr --dry-run
 
-# Resume from a specific state
+# Start a new run from a specific state
 frg workflow run issue-to-pr --start-from create_code
 ```
 
@@ -349,29 +349,34 @@ frg workflow run quick-example
 3. **Execute** - Run command/steps in current state
 4. **Transition** - Move to next state based on result
 5. **Repeat** - Continue until terminal state reached
-6. **Persist** - Every transition logged for resumption
+6. **Persist** - Every transition is logged for history and recovery planning
 
 ### State Persistence
 
-Workflows use transaction logs to track every state change. If interrupted:
+Workflows use transaction logs to track every state change. The log supports history and diagnosis;
+it does not keep execution alive or automatically resume a run after interruption. To retry work,
+start a new run:
 
 ```bash
-# Resume exactly where you left off
+# Start again from the workflow's initial state
 frg workflow run my-workflow
 ```
 
-**Note**: Running `frg workflow run <workflow-name>` without `--start-from` will start from the initial state, not from where the workflow was interrupted. You must explicitly use the `--start-from` flag to resume from a specific state.
+**Note**: `--start-from` starts a new run; it does not resume the old process or undo side effects
+from earlier states. Any state in the workflow can be the target; states marked
+`is_entry_point = true` are the ones the workflow author recommends. Verify the target's
+prerequisites and artifacts before starting there.
 
 ### Discovering Workflow States
 
-Before resuming or debugging a workflow, you can list all available states:
+Before starting a recovery run or debugging a workflow, list its states:
 
 ```bash
 frg workflow run <workflow-name> --list-states
 ```
 
 This displays:
-- State names (exact strings for `--start-from`)
+- State names, with `[recommended start]` marking author-recommended `--start-from` states
 - State types (command, approval, operation, check, success, failed, cancelled)
 - Descriptions explaining each state's purpose
 - Initial state marker (*)
@@ -388,7 +393,7 @@ Workflow States: issue-to-pr
   await_draft_approval         approval     Review & edit issue before planning
   plan_implementation          command      Creating implementation plan
   await_plan_approval          approval     Review & edit plan before coding
-  create_code                  command      Creating code and tests
+  create_code                  command      Creating code and tests [recommended start]
   completed                    success      Workflow completed successfully
   draft_failed                 failed       Draft generation failed
 
@@ -399,19 +404,21 @@ Use state names with --start-from to resume from a specific state:
 ```
 
 Use this information to:
-- Resume workflows: `frg workflow run issue-to-pr --start-from create_code`
+- Start a fresh run from the recommended `create_code` state: `frg workflow run issue-to-pr --start-from create_code`
 - Understand workflow structure before execution
 - Debug workflow execution issues
 
-### Resuming Workflows
+### Starting from a Specific State
 
-To resume from a specific step, use:
+To start a new run from a specific step, use:
 
 ```bash
 frg workflow run my-workflow --start-from awaiting_approval
 ```
 
-To see which state to resume from, check the error message when a workflow fails - it provides a helpful hint with the exact command to retry. You can also use `--list-states` to list all available state names.
+Use `--list-states` to inspect states. Any existing state is accepted; prefer states marked
+`[recommended start]`, whose prerequisites the workflow author has confirmed can be met without
+running the earlier states.
 
 ## When to Use Each Feature
 

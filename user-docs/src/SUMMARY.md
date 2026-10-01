@@ -9,6 +9,7 @@
 
 - [Getting Started]()
   - [Installation](./getting-started/installation.md)
+  - [Desktop Workflows](./getting-started/desktop-workflows.md)
   - [Licensing](./getting-started/licensing.md)
   - [Shell Completions](./getting-started/completions.md)
 

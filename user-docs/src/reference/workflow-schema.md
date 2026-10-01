@@ -202,6 +202,7 @@ description = "Optional description"
 | `retry` | Object | No | Retry configuration |
 | `max_visits` | Number | No | Override loop detection threshold for this state |
 | `is_exit_point` | Boolean | No | Marks this state as a certified `frg workflow run --ends-at` target (default: false) |
+| `is_entry_point` | Boolean | No | Recommends this non-initial state as a `--start-from` target (default: false) |
 
 > **Note**: States must specify one of: `operation`, `operations`, `command`, or `approval`. The `operation`/`operations` fields represent the new operation model, while `command`/`pre_steps`/`post_steps` are legacy patterns maintained for backward compatibility.
 
@@ -219,6 +220,20 @@ description = "Optional description"
 > is_exit_point = true  # valid --ends-at target
 > operation = { id = "open-pr", type = "agent", prompt = "..." }
 > on_success = "completed"
+> ```
+
+> **`is_entry_point` and `--start-from`**: `frg workflow run <name> --start-from <state>` creates
+> a new run at that state; it does not resume the prior process or undo earlier side effects. Any
+> existing state is accepted. Mark a state `is_entry_point = true` to recommend it as a start
+> target whose prerequisites can be met without running preceding states: `--list-states` shows it
+> as `[recommended start]`, and Forge Desktop offers only such states (plus the initial state).
+>
+> ```toml
+> [[workflow.states]]
+> name = "create_code"
+> is_entry_point = true # safe after issue analysis and planning
+> command = { target = "code", operation = "create" }
+> on_success = "check_tasks"
 > ```
 
 ---
