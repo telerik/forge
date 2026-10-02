@@ -14,13 +14,20 @@ Progress tracking consists of three main components:
 
 Before starting a workflow, frg automatically validates that all required input files exist. These requirements are extracted from the `<context>` section of the workflow's task prompt.
 
+Every workflow command first prints the frg header followed by the workspace the run writes to, the command being run, and how to cancel it. This start-up block is not shown with `--quiet`, and the workspace line is omitted when the run has no job directory of its own (for example, without an Issue, PR, or Ticket ID).
+
 ### Example: Successful Validation
 
 ```
-Issue ID: 42
-PR ID: (not set)
+    ______  ____    ____    ______  ______
+   / ____/ / __ \  / __ \  / ____/ / ____/
+  / /_    / / / / / /_/ / / / __  / __/
+ / __/   / /_/ / / _, _/ / /_/ / / /___
+/_/      \____/ /_/ |_|  \____/ /_____/
 
-✓ Workspace validated: .forge/work/job_42/
+✓ Workspace validated: .forge/work/job_42
+→ Command: frg code create
+ℹ Press Ctrl+C to cancel (trace will be saved)
 
 Required Inputs:
   ✓ .forge/work/job_42/issue/issue.md
@@ -35,10 +42,15 @@ All required files exist, so the workflow proceeds.
 ### Example: Missing Required Files
 
 ```
-Issue ID: 42
-PR ID: (not set)
+    ______  ____    ____    ______  ______
+   / ____/ / __ \  / __ \  / ____/ / ____/
+  / /_    / / / / / /_/ / / / __  / __/
+ / __/   / /_/ / / _, _/ / /_/ / / /___
+/_/      \____/ /_/ |_|  \____/ /_____/
 
-✓ Workspace validated: .forge/work/job_42/
+✓ Workspace validated: .forge/work/job_42
+→ Command: frg code create
+ℹ Press Ctrl+C to cancel (trace will be saved)
 
 Required Inputs:
   ✓ .forge/work/job_42/issue/issue.md
