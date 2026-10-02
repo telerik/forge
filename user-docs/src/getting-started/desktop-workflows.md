@@ -32,3 +32,33 @@ files directly. Binary, oversized, or out-of-job files cannot be previewed.
 In **Advanced options** of the launcher, **Start from** lists only the workflow's initial state and
 states marked `is_entry_point = true`, and **Ends at** lists only later states marked
 `is_exit_point = true`.
+
+A project runs one workflow at a time. A workflow blocks new workflows only while the project
+engine is still running it; once it completes, fails, is cancelled, or is interrupted, you can start
+another workflow or choose **Run again**.
+
+## Run a Single Command
+
+Select **Command** in the launcher to run one Forge command (for example `issue draft` or `ask`)
+instead of a whole workflow.
+
+1. Choose a command. Forge Desktop lists only the commands and options the project engine accepts.
+2. Enter the issue, pull request, or support ticket the command needs, and any options or
+   instructions.
+3. Select **Run command**. Forge starts the command through the project engine, the same way the
+   CLI does.
+
+Unlike a workflow's issue, an issue, pull request, or ticket ID supplied to a command is saved as
+the project's context, exactly like `frg config set-issue`, `frg config set-pr`, or
+`frg config set-ticket`. Later CLI commands in the project use it too. A command without IDs uses
+the project's saved context. The IDs are saved only once the engine accepts the command.
+
+While a run is in progress, Forge Desktop refuses to switch the project to a different issue,
+pull request, or ticket than the run's or the saved one, including a pull request the run created:
+wait for that run to finish, or run the command for the same item. CLI commands such as
+`frg config set-issue` write the saved context directly and are not checked.
+
+Follow the command on its task page, which shows its progress. Use **Cancel** to request
+cancellation from the engine. If the command cannot start (for example, you are signed out, a
+required ID is missing, or another run is using the project's context), the launcher shows the
+reason; if it fails while running, its task page shows the engine's error.
