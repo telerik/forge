@@ -64,6 +64,28 @@ Agent not found in PATH
 
 ---
 
+### Copilot Login Succeeds but Forge Cannot Verify It
+
+**Problem**: `copilot login` succeeds, but Forge's coding-agent check fails.
+
+Forge verifies agent readiness with a small model request, not just the presence
+of a saved login. This request may consume Copilot usage and uses the default
+model configured in `.forge/config/agents.toml`.
+
+**Solution**:
+
+1. Check whether `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, or `GITHUB_TOKEN` is set.
+   Copilot uses these, in that order, before the credentials saved by
+   `copilot login`, so a successful login does not fix a bad exported token.
+   Fine-grained tokens need the **Copilot Requests** permission. Do not share
+   token values in logs or bug reports.
+2. Look for the CLI's own error in the newest `~/.copilot/logs/process-*.log`
+   file, for example `Personal Access Token does not have "Copilot Requests" permission`.
+3. Restart the desktop app from a new terminal after changing shell profile
+   variables, so it picks up the new environment, then use **Check again**.
+
+---
+
 ### Windows: npm-Installed Copilot Auto-Discovery
 
 **Status**: ✅ **Fully Supported** (frg v4.1.0+)
