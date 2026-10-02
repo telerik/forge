@@ -6,8 +6,8 @@ Forge Desktop can start an enabled workflow for an issue from the project launch
 2. Choose a workflow, or leave the selector on **Auto** and select **Suggest workflow** to have
    Forge recommend one after reading the issue (when routing is enabled in `project.toml`).
 3. Select **Run workflow**. Forge starts the workflow through the project engine for that issue.
-   The issue applies to this run only; the project's saved issue context (set by
-   `frg config set-issue`) is left unchanged.
+   Once run setup succeeds, Forge saves the issue as the project's context, like
+   `frg config set-issue`; later CLI commands in the project use it too.
 4. Follow the run on its task page. The page receives replayed and live engine events, shows stage
    progress, and prompts for approval or input when the workflow requires it. Use **Cancel** to
    request cancellation from the engine. After cancellation, choose **Run again** to start from the
@@ -48,10 +48,16 @@ instead of a whole workflow.
 3. Select **Run command**. Forge starts the command through the project engine, the same way the
    CLI does.
 
-Unlike a workflow's issue, an issue, pull request, or ticket ID supplied to a command is saved as
-the project's context, exactly like `frg config set-issue`, `frg config set-pr`, or
-`frg config set-ticket`. Later CLI commands in the project use it too. A command without IDs uses
-the project's saved context. The IDs are saved only once the engine accepts the command.
+A workflow's supplied issue ID, or a command's supplied issue, pull request, or ticket IDs,
+are saved as the project's context, like `frg config set-issue`, `frg config set-pr`, or
+`frg config set-ticket`.
+Later CLI commands in the project use it too. A command without IDs uses the project's saved
+context. For workflows, the issue is saved only once run setup (including the event log)
+succeeds; an event-log setup failure leaves saved context unchanged. A failure after the run is
+accepted does not restore the previous issue. For single commands, supplied IDs are saved after
+catalog validation and before execution setup; a later setup failure can leave those IDs saved.
+A workflow dry run does not change saved context or create project job files; its validation
+events are logged in a temporary directory.
 
 While a run is in progress, Forge Desktop refuses to switch the project to a different issue,
 pull request, or ticket than the run's or the saved one, including a pull request the run created:
