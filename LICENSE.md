@@ -1,9 +1,13 @@
-# Early Access Agreement
+# License
 
-© Copyright 2025 Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
+© Copyright Progress Software Corporation and/or its subsidiaries or affiliates.
+All Rights Reserved.
 
-PROGRESS SOFTWARE CORPORATION CONFIDENTIAL AND PROPRIETARY
+Your use of Progress Forge is governed by the Progress Forge End User License Agreement:
 
-This Early Access Agreement and Attachment A ("Agreement"), effective as of the date of your access to the Pilot Offering will govern your access and use of the Software.
+**https://www.telerik.com/purchase/license-agreement/forge**
 
-> Download the Early Access Agreement from here: https://www.telerik.com/docs/default-source/default-document-library/early-access-agreement-progress-agent-harness.docx
+By downloading, installing, or using Progress Forge, you accept and agree to be bound by the
+terms of that agreement.
+
+Third-party component notices and license texts are listed in [NOTICE.txt](NOTICE.txt).
