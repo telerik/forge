@@ -1,68 +1,75 @@
-# project-nia
+# Progress Forge
 
-This repository distributes the **Nia CLI** binaries and user documentation. It does not contain the Nia source code.
+**Turn AI-assisted development into a repeatable engineering process.**
 
-Nia is an Agentic SDLC (Software Development Life Cycle) CLI from Progress. It orchestrates AI coding agents through structured workflows that help teams plan work, implement changes, review results, and maintain an auditable record of AI-assisted development. Detailed information and key features can be founder in the [Introduction articles](https://telerik.github.io/project-nia/index.html) in the documentation.
+Progress Forge is an agentic software development life cycle (SDLC) harness that orchestrates AI
+coding agents, project context, tools, workflow rules, and human oversight. It provides a
+structured, repeatable framework for guiding work, reviewing results, and maintaining traceability
+across development, documentation, security, planning, and support workflows — while letting teams
+customize the process to their needs.
 
-## Try Nia in minutes (recommended)
+Forge does not replace your coding agent. Your agent executes the work; Forge supplies the
+surrounding structure and controls.
 
-The fastest, lowest-friction way to experience Nia is the **[Healthcare demo app](https://github.com/telerik/healthcare-app-angular)** — a realistic Angular codebase wired up as a Nia playground.
+| | |
+| --- | --- |
+| Product page | https://www.telerik.com/forge |
+| Documentation | https://www.telerik.com/forge/documentation |
+| Free trial | https://www.telerik.com/try/forge |
+| Releases | https://github.com/telerik/forge/releases |
 
-- **Zero local setup — GitHub Codespaces:** open [`telerik/healthcare-app-angular`](https://github.com/telerik/healthcare-app-angular) on GitHub and choose **Code → Codespaces → Create codespace**. The included dev container installs Node.js, the GitHub CLI, the AI coding agents, and the Nia CLI automatically — then you just authenticate an agent and run `nia`.
-- **Local VS Code Dev Container:** clone the demo repo and run **Dev Containers: Reopen in Container**. Same automated setup, running on your machine.
-- **Manual local install:** follow the demo app's [README](https://github.com/telerik/healthcare-app-angular#experiment-with-the-nia-cli) to install Nia step by step alongside the app.
+This public repository distributes Progress Forge releases. The source code is maintained separately.
 
-Nia authenticates through the AI coding agent you configure (GitHub Copilot CLI, Claude Code, or OpenCode) — **there is no separate Nia API key**.
+## How Forge Works
 
-## Install Nia in your own project
+Forge connects a request to an agent through a sequence of controlled stages:
 
-Use the GitHub CLI to download and run the installer from this repository's latest release. Authenticate first with `gh auth login`.
+1. **Discovers project context** — the applicable project, toolchain, agent, and workflow
+   configuration, plus work-item context such as an issue, pull request, or ticket.
+2. **Builds the command surface** — utility capabilities combined with built-in and
+   project-defined workflow targets.
+3. **Composes the work request** — the selected operation with role instructions, task prompts,
+   project metadata, relevant files, and configured model or agent choices.
+4. **Invokes the selected agent** — streaming agent activity and managing sessions while work
+   is in progress.
+5. **Checks the result** — prerequisite checks, output validation, tests, builds, file checks,
+   and retries determine whether a workflow proceeds, retries, pauses, or takes a failure path.
+6. **Keeps people in control** — approval gates let a person review a plan, code review, or
+   delivery decision before the next stage continues.
+7. **Records the outcome** — artifacts, traces, state transitions, and execution metadata are
+   preserved so work can be inspected, resumed, or audited later.
 
-```bash
-# Linux / macOS
-gh release download --repo telerik/project-nia --pattern 'install.sh'
-sh install.sh
-```
+## Getting Started
 
-```powershell
-# Windows (PowerShell 6+)
-gh release download --repo telerik/project-nia --pattern 'install.ps1'
-.\install.ps1
-```
+Choose your onboarding experience:
 
-Open a new terminal so the updated `PATH` takes effect, then verify:
+| Interface | Best for |
+| --- | --- |
+| **Forge Desktop App** | Guided setup for repositories, agents, and issue trackers, with visual workflow monitoring and approvals |
+| **`frg` CLI** | Direct control, terminal automation, scripting, CI/CD integration, and workflow recovery |
 
-```bash
-nia --version
-```
+Both expose the same core Forge concepts and share one session and license key.
 
-Next, configure your email:
-
-```bash
-nia config user --email "john@company.com"
-```
-
-Next, from the root of your project:
-
-```bash
-nia config init --issues github_issues --code github --agent github_copilot --models stable
-nia --help
-```
-
-For the full walkthrough — installing an agent, initializing Nia, and running your first workflow — follow the [Quick Start](https://telerik.github.io/project-nia/quick-start.html).
-
-## What's in this repository
-
-- **`user-docs/`** — User-facing documentation for the Nia CLI, built with [mdBook](https://rust-lang.github.io/mdBook/). Covers installation, configuration, workflows, CLI reference, and troubleshooting.
-- **`book.toml`** — mdBook configuration for the Nia CLI User Guide.
-- **GitHub Releases** — the published Nia CLI binaries, installers (`install.sh` / `install.ps1`), and checksums.
-
-## Documentation
-
-The published documentation is available at **https://telerik.github.io/project-nia/**. Start with the [Quick Start](https://telerik.github.io/project-nia/quick-start.html).
+Follow the [getting started documentation](https://wwwuat.telerik.com/forge/documentation/introduction#getting-started-with-progress-forge).
 
 You can also browse the documentation source under [`user-docs/src/`](user-docs/src/README.md), starting with the [Quick Start](user-docs/src/quick-start.md)
 
-## Source code
+[GitHub Releases](https://github.com/telerik/forge/releases) contain the Forge binaries,
+installers, and more. Installer
+asset names are stable across releases, and `frg update` upgrades an existing installation.
 
-The Nia source code is maintained in a separate private repository and is not distributed here.
+## Licensing
+
+Forge requires a valid Telerik license to run agent-backed workflow commands. 
+
+Use of Progress Forge is governed by the
+[Progress Forge License Agreement](https://www.telerik.com/purchase/license-agreement/forge) —
+see [LICENSE.md](LICENSE.md). Third-party component notices are listed in [NOTICE.txt](NOTICE.txt).
+
+## Support
+
+- [Documentation](https://www.telerik.com/forge/documentation)
+- [Progress Telerik Support](https://www.telerik.com/support)
+- [Report an issue](https://github.com/telerik/forge/issues)
+
+© Progress Software Corporation and/or its subsidiaries or affiliates. All Rights Reserved.
